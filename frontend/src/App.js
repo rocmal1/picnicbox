@@ -11,20 +11,28 @@ const apiUrl = "http://localhost:3001";
 
 function App() {
   // ** STATE
-  // Room Code is input to a text box which is tracked as state
+  // Room Code and Player Name are input to text boxes which are tracked as state
   const [roomCode, setRoomCode] = useState("");
+  const [name, setName] = useState("");
   // Error message is tracked as state and displayed in the ErrorComponent
   const [errorText, setErrorText] = useState("");
 
-  // ** REF
-  const joinRoomInputRef = useRef(null);
-
   const handleRoomCodeInputChange = (e) => {
+    // Validate inputs, only latin alphabet uppercase
     let val = e.target.value;
     val = val.replace(/[^a-zA-Z]/g, "").toUpperCase();
     e.target.value = val;
-    console.log("Current Room Code: ", e.target.value);
+    // Update state to reflect new input
     setRoomCode(e.target.value);
+  };
+
+  const handleNameInputChange = (e) => {
+    // Validate inputs, only latin alphabet uppercase
+    let val = e.target.value;
+    val = val.replace(/[^a-zA-Z]/g, "").toUpperCase();
+    e.target.value = val;
+    // Update state to reflect new input
+    setName(e.target.value);
   };
 
   // Query the server to find if the room exists. If it does, try to join the room.
@@ -83,12 +91,16 @@ function App() {
     <div className="App">
       <input
         type="text"
-        placeholder="Room Code"
+        placeholder="ROOM CODE"
         onChange={handleRoomCodeInputChange}
-        ref={joinRoomInputRef}
         maxLength="4"
       />
-
+      <input
+        type="text"
+        placeholder="NAME"
+        onChange={handleNameInputChange}
+        maxLength="12"
+      />
       <button id="joinRoomSubmit" onClick={handleJoinRoomSubmit}>
         Join
       </button>
