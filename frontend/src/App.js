@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 // Axios is used to handle HTTP requests
 import axios from "axios";
 
@@ -10,19 +10,26 @@ import ErrorComponent from "./Home/ErrorComponent";
 const apiUrl = "http://localhost:3001";
 
 function App() {
+  // ** STATE
   // Room Code is input to a text box which is tracked as state
   const [roomCode, setRoomCode] = useState("");
   // Error message is tracked as state and displayed in the ErrorComponent
   const [errorText, setErrorText] = useState("");
 
+  // ** REF
+  const joinRoomInputRef = useRef(null);
+
   const handleRoomCodeInputChange = (e) => {
+    let val = e.target.value;
+    val = val.replace(/[^a-zA-Z]/g, "").toUpperCase();
+    e.target.value = val;
     console.log("Current Room Code: ", e.target.value);
     setRoomCode(e.target.value);
   };
 
   // Query the server to find if the room exists. If it does, try to join the room.
   const handleJoinRoomSubmit = (e) => {
-    // Reset the error text and clear the text box
+    // Reset the error text
     setErrorText("");
 
     // Do not query the server if there is no room code entered
@@ -78,13 +85,18 @@ function App() {
         type="text"
         placeholder="Room Code"
         onChange={handleRoomCodeInputChange}
+        ref={joinRoomInputRef}
+        maxLength="4"
       />
+
       <button id="joinRoomSubmit" onClick={handleJoinRoomSubmit}>
         Join
       </button>
+
       <button id="createRoomSubmit" onClick={handleCreateRoomSubmit}>
         Create Room
       </button>
+
       <ErrorComponent text={errorText} />
     </div>
   );
