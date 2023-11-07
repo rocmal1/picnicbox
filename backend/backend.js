@@ -39,6 +39,11 @@ async function mongoConnect() {
 mongoConnect()
 const db = mongoClient.db('picnicbox_db');
 
+
+
+
+// ** ROUTES **
+/////////////////////////////////////
 app.get('/', (req, res) => {
     res.send('Successful response.');
 })
@@ -70,15 +75,22 @@ app.get('/joinroom/:roomCode', (req, res) => {
     (async () => {
         try {
             let results = await collection.find(query).toArray();
+
+            // If there is only one result, this was successful.
             if(results.length === 1) {
                 console.debug("Found room: ", results[0]);
-                res.send("Found the room.");
+                res.status(200);
+                res.send();
             }
+
+            // If there are no results, the room does not exist.
             else if(results.length === 0) {
                 console.debug("Could not find room:", roomCode);
                 res.status(404);
                 res.send();
             }
+
+            // If there are multiple results, this is an error.
             else {
                 console.error("Error: Multiple rooms found when trying join on", roomCode, "\nSee:", results);
             }
