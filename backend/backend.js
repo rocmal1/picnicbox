@@ -53,15 +53,55 @@ app.get("/", (req, res) => {
 
 // A post request to /newroom will create a new room and return the room code to the client
 app.post("/newroom", (req, res) => {
+  // The collection we'll be working in
   let collection = db.collection("rooms");
-  let query = {};
 
-  async function call() {
-    let results = await collection.find(query).toArray();
-    console.log(results);
-    res.send(results);
+  // Generate a 4-character sequence of capital letters
+  // Used to create room code
+  function generateRandomLetters(length) {
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * letters.length);
+      result += letters.charAt(randomIndex);
+    }
+    return result;
   }
-  call();
+
+  // Generate a room code then query the DB to see if it exists
+  // If it already exists, generate another and try again up to maxRequests
+  async function tryToCreateRoom() {
+    let newRoomCode = "";
+    let maxRequests = 10;
+    let countRequests = 0;
+    while (!newRoomCode && countRequests <= maxRequests) {
+      countRequests++;
+      let tryRoomCode = generateRandomLetters(4);
+      let query = { code: tryRoomCode };
+      console.debug("Searching for room code:", newRoomCode);
+      try {
+        let results = await collection.find(query).toArray();
+        if (results.length > 0) {
+          continue;
+        }
+        newRoomCode = tryRoomCode;
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    // Throw an error if the newRoomCode is still = ""
+    if (newRoomCode === "") {
+      console.error("Error: Could not create a room");
+      res.status(500);
+      res.send("Error: Could not create a room");
+    }
+    // Create the room object and send it in the response to the client
+    // TODO:  See above.
+    res.status(200);
+    res.send("Room " + newRoomCode + " created");
+  }
+  tryToCreateRoom();
 });
 
 // When a client requests to join a room, they specify a room code in the GET uri
