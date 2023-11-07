@@ -3,6 +3,7 @@ const dotenv = require("dotenv").config();
 
 // Create express server
 const express = require("express");
+
 const app = express();
 
 // Import MongoDB for use with MongoDB Atlas database
@@ -10,6 +11,7 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 
 // Use cors package middleware to allow cross-origin resource sharing
 const cors = require("cors");
+
 app.use(cors());
 
 // MongoDB Atlas URI includes the username and password.  Set this using an environment variable.
@@ -105,6 +107,11 @@ app.post("/newroom", (req, res) => {
 });
 
 // When a client requests to join a room, they specify a room code in the GET uri
+app.get("/joinroom/:roomCode", (req, res) => {
+  // Grab the room code from the URL parameters
+  let roomCode = req.params.roomCode;
+  console.debug("Recieved request to join room:", roomCode);
+});
 app.get("/joinroom/:roomCode", (req, res) => {
   // Grab the room code from the URL parameters
   let roomCode = req.params.roomCode;

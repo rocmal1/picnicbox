@@ -75,6 +75,7 @@ function App() {
 
   const handleCreateRoomSubmit = (e) => {
     console.log("Attempting to create room");
+    console.log("Attempting to create room");
     // axios.get(apiUrl)
     //   .then(response => {
     //     console.log(response.data);
