@@ -13,7 +13,7 @@ const getCookie = (name) => {
   if (val) {
     return val.split("=")[1];
   }
-  return "";
+  throw "Unable to getCookie('" + name + "'): cookie not found";
 };
 
 export { setCookie, getCookie };

@@ -109,8 +109,11 @@ function Home() {
   };
 
   function enterRoom(roomCode) {
-    let userID = getCookie("userID");
-    if (!userID) {
+    // If we cannot get the userID cookie, tell the server to create a new user and provide the ID
+    // Then set the cookie
+    try {
+      getCookie("userID");
+    } catch (error) {
       // Request a new userID from the server
       // Expect: response containing a userID
       axios
@@ -119,7 +122,6 @@ function Home() {
           // Set a cookie with the unique userID provided by the server
           if (res.data.userID) {
             setCookie("userID", res.data.userID, 300000);
-            userID = res.data.userID;
           }
         })
         .catch((error) => {
