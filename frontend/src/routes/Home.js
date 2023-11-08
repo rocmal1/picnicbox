@@ -47,6 +47,12 @@ function Home() {
     // Reset the error text
     setErrorText("");
 
+    // Ensure a name has been entered
+    if (!name) {
+      setErrorText("Error: Please enter a name");
+      return;
+    }
+
     // Do not query the server if there is no room code entered
     if (roomCode) {
       console.log("Attempting to join room: ", roomCode);
@@ -85,6 +91,12 @@ function Home() {
   };
 
   const handleCreateRoomSubmit = (e) => {
+    // Ensure a name has been entered
+    if (!name) {
+      setErrorText("Error: Please enter a name");
+      return;
+    }
+
     console.log("Attempting to create room");
     axios.post(apiUrl + "/newroom").then((response) => {
       if (response.status === 200) {
