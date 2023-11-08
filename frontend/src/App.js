@@ -7,7 +7,7 @@ import "./App.css";
 // Components
 import ErrorComponent from "./Home/ErrorComponent";
 
-const apiUrl = "http://localhost:3001";
+const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
 function App() {
   // ** STATE
@@ -48,6 +48,7 @@ function App() {
       axios
         .get(apiUrl + "/joinroom/" + roomCode)
         .then((response) => {
+          // Do this when the room is found
           console.log(response.status);
         })
         .catch((error) => {
@@ -83,9 +84,18 @@ function App() {
     //     console.error('Error:', error);
     //   });
     axios.post(apiUrl + "/newroom").then((response) => {
-      console.log(response.data.firstName);
+      if (response.status === 200) {
+        enterRoom(response.data.roomCode);
+      } else {
+        // On server error, display the error text
+        setErrorText(response.data);
+      }
     });
   };
+
+  function enterRoom(roomCode) {
+    console.debug("Entering room", roomCode);
+  }
 
   return (
     <div className="App">

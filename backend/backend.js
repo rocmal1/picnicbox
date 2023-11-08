@@ -92,14 +92,38 @@ app.post("/newroom", (req, res) => {
 
     // Throw an error if the newRoomCode is still = ""
     if (newRoomCode === "") {
-      console.error("Error: Could not create a room");
+      console.error(
+        "Error: Could not create a room after",
+        countRequests,
+        "attempts"
+      );
       res.status(500);
-      res.send("Error: Could not create a room");
+      res.send(
+        "Error: Could not create a room after",
+        countRequests,
+        "attempts"
+      );
     }
-    // Create the room object and send it in the response to the client
-    // TODO:  See above.
-    res.status(200);
-    res.send("Room " + newRoomCode + " created");
+    // Create the room object and add it to the database
+    collection
+      .insertOne({
+        timestamp: Date.now(),
+        roomCode: newRoomCode,
+        debug: true,
+      })
+      .then((result) => {
+        console.debug(result);
+        // Send the roomCode of the object to the client
+        // TODO:  Optimize this to use the unique _id instead of the roomCode.
+        //        Requires frontend to send join request using _id.
+        res.status(200);
+        res.send({ roomCode: newRoomCode });
+      })
+      .catch((error) => {
+        console.error("Error: Unable to create new room in database:", error);
+        res.status(500);
+        res.send("Error: Unable to create new room in database:", error);
+      });
   }
   tryToCreateRoom();
 });
@@ -112,7 +136,7 @@ app.get("/joinroom/:roomCode", (req, res) => {
 
   // Query if the room exists
   let collection = db.collection("rooms");
-  let query = { code: roomCode };
+  let query = { roomCode: roomCode };
   (async () => {
     try {
       let results = await collection.find(query).toArray();
