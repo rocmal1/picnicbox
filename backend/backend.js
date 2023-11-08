@@ -4,6 +4,8 @@ const dotenv = require("dotenv").config();
 // Create express server
 const express = require("express");
 const app = express();
+// Use json middleware to attach POST request json as request.body
+app.use(express.json());
 
 // Import MongoDB for use with MongoDB Atlas database
 const { MongoClient, ServerApiVersion } = require("mongodb");
@@ -49,6 +51,27 @@ const db = mongoClient.db("picnicbox_db");
 /////////////////////////////////////
 app.get("/", (req, res) => {
   res.send("Successful response.");
+});
+
+app.post("/user", (req, res) => {
+  let collection = db.collection("users");
+  console.debug("Recieved request to add user name", req.body.name);
+  collection
+    .insertOne({
+      timestamp: Date.now(),
+      name: req.body.name,
+      debug: true,
+    })
+    .then((result) => {
+      res.status(200);
+      res.send({
+        userID: result.insertedId,
+      });
+    })
+    .catch((error) => {
+      res.status(500);
+      res.send(error);
+    });
 });
 
 // A post request to /newroom will create a new room and return the room code to the client

@@ -1,12 +1,12 @@
-const setCookie = (name, val, milliseconds) => {
+const setCookie = (name, val, maxSeconds) => {
   try {
-    document.cookie(name, val, { maxAge: milliseconds });
+    document.cookie = name + "=" + val + ";maxAge:" + maxSeconds;
   } catch (error) {
     console.error("Error when setting cookie '" + name + "':", error);
   }
 };
 
-const findCookie = (name) => {
+const getCookie = (name) => {
   const val = document.cookie
     .split("; ")
     .find((row) => row.startsWith(name + "="));
@@ -16,4 +16,4 @@ const findCookie = (name) => {
   return "";
 };
 
-export { setCookie, findCookie };
+export { setCookie, getCookie };

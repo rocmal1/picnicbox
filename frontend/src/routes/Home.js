@@ -47,47 +47,47 @@ function Home() {
     // Reset the error text
     setErrorText("");
 
+    // Ensure the room code exists
+    if (!roomCode) {
+      return;
+    }
     // Ensure a name has been entered
     if (!name) {
       setErrorText("Error: Please enter a name");
       return;
     }
+    console.log("Attempting to join room: ", roomCode);
 
-    // Do not query the server if there is no room code entered
-    if (roomCode) {
-      console.log("Attempting to join room: ", roomCode);
-
-      // Send a GET request to get the room data
-      axios
-        .get(apiUrl + "/joinroom/" + roomCode)
-        .then((response) => {
-          // Do this when the room is found
-          // If there is a room code in the response, enter the room
-          if (response.data.roomCode) {
-            enterRoom(response.data.roomCode);
+    // Send a GET request to get the room data
+    axios
+      .get(apiUrl + "/joinroom/" + roomCode)
+      .then((response) => {
+        // Do this when the room is found
+        // If there is a room code in the response, enter the room
+        if (response.data.roomCode) {
+          enterRoom(response.data.roomCode);
+        }
+      })
+      .catch((error) => {
+        // Per Axios documentation: https://github.com/axios/axios#handling-errors
+        if (error.response) {
+          // The request was made and the server responded with status code that is not in 2XX
+          // If it is 404 we know the room was not found
+          if (error.response.status === 404) {
+            console.error("Room code", roomCode, "does not exist");
+            setErrorText("Room " + roomCode + " does not exist");
+            return;
           }
-        })
-        .catch((error) => {
-          // Per Axios documentation: https://github.com/axios/axios#handling-errors
-          if (error.response) {
-            // The request was made and the server responded with status code that is not in 2XX
-            // If it is 404 we know the room was not found
-            if (error.response.status === 404) {
-              console.error("Room code", roomCode, "does not exist");
-              setErrorText("Room " + roomCode + " does not exist");
-              return;
-            }
-          } else if (error.request) {
-            // No response was recieved from the server
-            console.error(error.request);
-            setErrorText("Unable to contact server");
-          } else {
-            // Something happened when setting up the request which triggered an error
-            console.error("An error occurred while joining room ", roomCode);
-            setErrorText("An error occurred while joining room " + roomCode);
-          }
-        });
-    }
+        } else if (error.request) {
+          // No response was recieved from the server
+          console.error(error.request);
+          setErrorText("Unable to contact server");
+        } else {
+          // Something happened when setting up the request which triggered an error
+          console.error("An error occurred while joining room ", roomCode);
+          setErrorText("An error occurred while joining room " + roomCode);
+        }
+      });
   };
 
   const handleCreateRoomSubmit = (e) => {
@@ -109,6 +109,25 @@ function Home() {
   };
 
   function enterRoom(roomCode) {
+    let userID = getCookie("userID");
+    if (!userID) {
+      // Request a new userID from the server
+      // Expect: response containing a userID
+      axios
+        .post(apiUrl + "/user", { name: name })
+        .then((res) => {
+          // Set a cookie with the unique userID provided by the server
+          if (res.data.userID) {
+            setCookie("userID", res.data.userID, 300000);
+            userID = res.data.userID;
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+          setErrorText("Error creating user");
+          return;
+        });
+    }
     console.debug("Entering room", roomCode);
     navigate("/room/" + roomCode);
   }
