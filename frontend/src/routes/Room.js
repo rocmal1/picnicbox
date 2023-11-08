@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
+
 import { getCookie } from "../helpers";
 
 import { useParams } from "react-router-dom";
 
+import { io } from "socket.io-client";
+
 import ErrorComponent from "../components/ErrorComponent";
+
+const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
 function Room(props) {
   // Grab the roomCode from the react router path /room/:roomCode
@@ -47,9 +52,24 @@ function Room(props) {
     );
   }
 
+  const socket = io(apiUrl, {
+    reconnectionDelayMax: 10000,
+    auth: {
+      token: "123",
+    },
+    query: {
+      "my-key": "my-value",
+    },
+  });
+  socket.io.on("error", (error) => {
+    console.debug("Socket error:", error);
+  });
+
   return (
     <div>
-      Room Code is: {roomCode}, User ID is: {userID}
+      <div>
+        Room Code is: {roomCode}, User ID is: {userID}
+      </div>
     </div>
   );
 }

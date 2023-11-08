@@ -1,9 +1,12 @@
 // Load environment variables from './.env' into process.env variables
 const dotenv = require("dotenv").config();
-
+// socket.io websocket server
+const { Server } = require("socket.io");
+const { createServer } = require("node:http");
 // Create express server
 const express = require("express");
 const app = express();
+const httpServer = createServer(app);
 // Use json middleware to attach POST request json as request.body
 app.use(express.json());
 
@@ -14,6 +17,8 @@ const { MongoClient, ServerApiVersion } = require("mongodb");
 const cors = require("cors");
 app.use(cors());
 
+// DATABASE SETUP
+//////////////////////
 // MongoDB Atlas URI includes the username and password.  Set this using an environment variable.
 const mongoUri =
   "mongodb+srv://" +
@@ -198,4 +203,20 @@ app.get("/joinroom/:roomCode", (req, res) => {
   })();
 });
 
-app.listen(3001, () => console.log("Example app is listening on port 3001."));
+const io = new Server(httpServer, {
+  // Required for cross-origin resource sharing
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("a user connected");
+  socket.on("disconnect", () => {
+    console.log("user disconnected");
+  });
+});
+
+httpServer.listen(3001, () =>
+  console.log("Example app is listening on port 3001.")
+);
