@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 // *** Component & Style Imports
 import ErrorComponent from "../components/ErrorComponent";
 import "./Home.css";
+import { setCookie, getCookie } from "../helpers";
 
 // *** Environment Variables
 const apiUrl = process.env.REACT_APP_BACKEND_URL;
