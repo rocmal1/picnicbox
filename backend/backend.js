@@ -145,7 +145,7 @@ app.get("/joinroom/:roomCode", (req, res) => {
       if (results.length === 1) {
         console.debug("Found room: ", results[0]);
         res.status(200);
-        res.send();
+        res.send({ roomCode: roomCode });
       }
 
       // If there are no results, the room does not exist.
@@ -163,9 +163,14 @@ app.get("/joinroom/:roomCode", (req, res) => {
           "\nSee:",
           results
         );
+        res.status(500);
+        res.send("Error: Multiple rooms found. This is a database error.");
       }
     } catch (e) {
+      // If there is an actual error of some other kind
       console.error("Error: Unable to query the database for rooms - see: ", e);
+      res.status(500);
+      res.send("Error: Unable to query the database for rooms.");
     }
   })();
 });

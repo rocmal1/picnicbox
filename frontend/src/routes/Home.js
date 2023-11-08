@@ -1,21 +1,27 @@
+// *** Package Imports
 import { useState, useRef } from "react";
 // Axios is used to handle HTTP requests
 import axios from "axios";
+// useNavigate is used to push URLs to the user
+import { useNavigate } from "react-router-dom";
 
-import "./App.css";
+// *** Component & Style Imports
+import ErrorComponent from "../components/ErrorComponent";
+import "./Home.css";
 
-// Components
-import ErrorComponent from "./Home/ErrorComponent";
-
+// *** Environment Variables
 const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
-function App() {
+function Home() {
   // ** STATE
   // Room Code and Player Name are input to text boxes which are tracked as state
   const [roomCode, setRoomCode] = useState("");
   const [name, setName] = useState("");
   // Error message is tracked as state and displayed in the ErrorComponent
   const [errorText, setErrorText] = useState("");
+
+  // useNavigate is used to push URLs to the user in React Router
+  const navigate = useNavigate();
 
   const handleRoomCodeInputChange = (e) => {
     // Validate inputs, only latin alphabet uppercase
@@ -49,7 +55,10 @@ function App() {
         .get(apiUrl + "/joinroom/" + roomCode)
         .then((response) => {
           // Do this when the room is found
-          console.log(response.status);
+          // If there is a room code in the response, enter the room
+          if (response.data.roomCode) {
+            enterRoom(response.data.roomCode);
+          }
         })
         .catch((error) => {
           // Per Axios documentation: https://github.com/axios/axios#handling-errors
@@ -76,13 +85,6 @@ function App() {
 
   const handleCreateRoomSubmit = (e) => {
     console.log("Attempting to create room");
-    // axios.get(apiUrl)
-    //   .then(response => {
-    //     console.log(response.data);
-    //   })
-    //   .catch(error => {
-    //     console.error('Error:', error);
-    //   });
     axios.post(apiUrl + "/newroom").then((response) => {
       if (response.status === 200) {
         enterRoom(response.data.roomCode);
@@ -95,10 +97,11 @@ function App() {
 
   function enterRoom(roomCode) {
     console.debug("Entering room", roomCode);
+    navigate("/room/" + roomCode);
   }
 
   return (
-    <div className="App">
+    <div className="Home">
       <input
         type="text"
         placeholder="ROOM CODE"
@@ -124,4 +127,4 @@ function App() {
   );
 }
 
-export default App;
+export default Home;
