@@ -211,11 +211,24 @@ const io = new Server(httpServer, {
 });
 
 io.on("connection", (socket) => {
-  console.log("a user connected");
+  console.log("User connected");
   socket.on("disconnect", () => {
     console.log("user disconnected");
   });
+  socket.on("sendUserInfo", (data) => {
+    console.debug("UserID", data.userID, "connected to room", data.roomCode);
+    // Attach the socket (client) to a room for future broadcasting
+    socket.join(data.roomCode);
+  });
 });
+
+setInterval(() => {
+  io.to("HJME").emit("hello");
+}, 5000);
+
+// io.on("sendUserInfo", (userID, roomCode) => {
+//   console.debug("UserID", userID, "connected to room", roomCode);
+// });
 
 httpServer.listen(3001, () =>
   console.log("Example app is listening on port 3001.")

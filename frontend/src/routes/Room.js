@@ -10,6 +10,11 @@ import ErrorComponent from "../components/ErrorComponent";
 
 const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
+// Connect to the server websocket
+const socket = io(apiUrl, {
+  reconnectionDelayMax: 10000,
+});
+
 function Room(props) {
   // Grab the roomCode from the react router path /room/:roomCode
   const { roomCode } = useParams();
@@ -32,7 +37,10 @@ function Room(props) {
           " Please disable any extensions/browser features which may be blocking cookies."
       );
     }
-  }, []);
+
+    // Set up websocket connection
+    socket.emit("sendUserInfo", { userID: userID, roomCode: roomCode });
+  }, [userID, roomCode]);
 
   // Validate the roomcode when it is changed (incl. on initial page load)
   useEffect(() => {
@@ -52,17 +60,12 @@ function Room(props) {
     );
   }
 
-  const socket = io(apiUrl, {
-    reconnectionDelayMax: 10000,
-    auth: {
-      token: "123",
-    },
-    query: {
-      "my-key": "my-value",
-    },
-  });
   socket.io.on("error", (error) => {
     console.debug("Socket error:", error);
+  });
+
+  socket.on("hello", () => {
+    console.debug("recieved hello ping");
   });
 
   return (
@@ -70,6 +73,7 @@ function Room(props) {
       <div>
         Room Code is: {roomCode}, User ID is: {userID}
       </div>
+      <button>test</button>
     </div>
   );
 }
