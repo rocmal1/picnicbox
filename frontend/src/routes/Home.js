@@ -1,5 +1,5 @@
 // *** Package Imports
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 // Axios is used to handle HTTP requests
 import axios from "axios";
 // useNavigate is used to push URLs to the user
@@ -20,6 +20,19 @@ function Home() {
   const [name, setName] = useState("");
   // Error message is tracked as state and displayed in the ErrorComponent
   const [errorText, setErrorText] = useState("");
+
+  // ** REF
+  // Used to track characters remaining in name
+  const charCounter = useRef(null);
+
+  // ** Constant values
+  const NAME_MAX_LENGTH = 12;
+
+  // ** USE EFFECT
+  // Update remaining characters when name changes
+  useEffect(() => {
+    charCounter.current.innerText = NAME_MAX_LENGTH - name.length;
+  }, [name]);
 
   // useNavigate is used to push URLs to the user in React Router
   const navigate = useNavigate();
@@ -142,12 +155,17 @@ function Home() {
         onChange={handleRoomCodeInputChange}
         maxLength="4"
       />
-      <input
-        type="text"
-        placeholder="NAME"
-        onChange={handleNameInputChange}
-        maxLength="12"
-      />
+      <div>
+        <input
+          type="text"
+          placeholder="NAME"
+          onChange={handleNameInputChange}
+          maxLength={NAME_MAX_LENGTH}
+        />
+        <div className="charCounter" ref={charCounter}>
+          {NAME_MAX_LENGTH}
+        </div>
+      </div>
       <button id="joinRoomSubmit" onClick={handleJoinRoomSubmit}>
         Join
       </button>
