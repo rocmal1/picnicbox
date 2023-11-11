@@ -276,8 +276,7 @@ io.on("connection", (socket) => {
       const userCollection = db.collection("users");
       const userQuery = { _id: new ObjectId(data.userID) };
       userCollection.updateOne(userQuery, {
-        $set: { roomID: doc._id },
-        $set: { socketID: socket.id },
+        $set: { roomID: doc._id, socketID: socket.id },
       });
     });
   });
