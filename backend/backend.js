@@ -84,6 +84,9 @@ app.post("/newroom", (req, res) => {
   // The collection we'll be working in
   let collection = db.collection("rooms");
 
+  // Post contains userID of the owner
+  let ownerUserID = req.body.userID;
+
   // Generate a 4-character sequence of capital letters
   // Used to create room code
   function generateRandomLetters(length) {
@@ -98,7 +101,7 @@ app.post("/newroom", (req, res) => {
 
   // Generate a room code then query the DB to see if it exists
   // If it already exists, generate another and try again up to maxRequests
-  async function tryToCreateRoom() {
+  async function tryToCreateRoom(ownerID) {
     let newRoomCode = "";
     let maxRequests = 10;
     let countRequests = 0;
@@ -137,6 +140,7 @@ app.post("/newroom", (req, res) => {
       .insertOne({
         timestamp: Date.now(),
         roomCode: newRoomCode,
+        ownerUserID: ownerID,
         debug: true,
       })
       .then((result) => {
@@ -153,7 +157,7 @@ app.post("/newroom", (req, res) => {
         res.send("Error: Unable to create new room in database:", error);
       });
   }
-  tryToCreateRoom();
+  tryToCreateRoom(ownerUserID);
 });
 
 // When a client requests to join a room, they specify a room code in the GET uri

@@ -11,7 +11,8 @@ import "./Home.css";
 import { setCookie, getCookie } from "../helpers";
 
 // *** Environment Variables
-const apiUrl = process.env.REACT_APP_BACKEND_URL;
+// const apiUrl = process.env.REACT_APP_BACKEND_URL;
+const apiUrl = "http://localhost:3001";
 
 function Home() {
   // ** STATE
@@ -78,7 +79,7 @@ function Home() {
         // Do this when the room is found
         // If there is a room code in the response, enter the room
         if (response.data.roomCode) {
-          enterRoom(response.data.roomCode);
+          navigate("/room/" + response.data.roomCode);
         }
       })
       .catch((error) => {
@@ -111,40 +112,45 @@ function Home() {
     }
 
     console.log("Attempting to create room");
-    axios.post(apiUrl + "/newroom").then((response) => {
-      if (response.status === 200) {
-        enterRoom(response.data.roomCode);
-      } else {
-        // On server error, display the error text
-        setErrorText(response.data);
-      }
+    getUserID().then((userID) => {
+      axios.post(apiUrl + "/newroom", { userID: userID }).then((response) => {
+        if (response.status === 200) {
+          console.debug("Entering room", response.data.roomCode);
+          navigate("/room/" + response.data.roomCode);
+        } else {
+          // On server error, display the error text
+          setErrorText(response.data);
+        }
+      });
     });
   };
 
-  function enterRoom(roomCode) {
-    // If we cannot get the userID cookie, tell the server to create a new user and provide the ID
-    // Then set the cookie
-    try {
-      getCookie("userID");
-    } catch (error) {
-      // Request a new userID from the server
-      // Expect: response containing a userID
-      axios
-        .post(apiUrl + "/user", { name: name })
-        .then((res) => {
-          // Set a cookie with the unique userID provided by the server
-          if (res.data.userID) {
-            setCookie("userID", res.data.userID, 300000);
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-          setErrorText("Error creating user");
-          return;
-        });
-    }
-    console.debug("Entering room", roomCode);
-    navigate("/room/" + roomCode);
+  function getUserID() {
+    // This function returns the userID as a resolved promise - either from the cookie or newly created
+    return new Promise((resolve, reject) => {
+      // If we cannot get the userID cookie, tell the server to create a new user and provide the ID
+      // Then set the cookie
+      try {
+        resolve(getCookie("userID"));
+      } catch (error) {
+        // Request a new userID from the server
+        // Expect: response containing a userID
+        axios
+          .post(apiUrl + "/user", { name: name })
+          .then((res) => {
+            // Set a cookie with the unique userID provided by the server
+            if (res.data.userID) {
+              setCookie("userID", res.data.userID, 300000);
+              resolve(res.data.userID);
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            setErrorText("Error creating user");
+            reject(error);
+          });
+      }
+    });
   }
 
   return (
