@@ -225,13 +225,16 @@ io.on("connection", (socket) => {
     // First, find the userID based on socketID
     const collection = db.collection("users");
     const query = { socketID: socket.id };
+
+    // Find the userDoc associated with the dc socket
     collection.findOne(query).then((usersDoc) => {
       try {
-        // Remove the user from the array of userIDs in the rooms doc
+        // Remove the user's userID from the array of userIDs in the rooms doc
         const roomCollection = db.collection("rooms");
-        const roomQuery = { _id: new ObjectId(usersDoc.roomID) };
+        console.log("RoomID in User is: ", usersDoc);
+        const roomQuery = { _id: usersDoc.roomID };
         roomCollection.updateOne(roomQuery, {
-          $pull: { userIDs: usersDoc.userID },
+          $pull: { userIDs: usersDoc._id.toString() },
         });
       } catch (error) {
         console.debug(error);
@@ -240,8 +243,7 @@ io.on("connection", (socket) => {
 
     // Remove the room and the socket from the user doc
     collection.updateOne(query, {
-      $set: { socketID: null },
-      $set: { roomID: null },
+      $set: { socketID: "", roomID: "" },
     });
   });
 
