@@ -125,6 +125,8 @@ function Home() {
     });
   };
 
+  // TODO: Make it so that when a user already has a cookie with a UserID, but has a
+  // different name than the user in the database, the user name in the database is updated
   function getUserID() {
     // This function returns the userID as a resolved promise - either from the cookie or newly created
     return new Promise((resolve, reject) => {

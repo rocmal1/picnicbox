@@ -24,6 +24,8 @@ function Room(props) {
 
   const [isLeader, setIsLeader] = useState(false);
 
+  const [users, setUsers] = useState([]);
+
   // Error message is tracked as state and displayed in the ErrorComponent
   const [errorText, setErrorText] = useState("");
 
@@ -71,6 +73,8 @@ function Room(props) {
     console.debug("recieved hello ping");
   });
 
+  // Ask/Tell who is the leader of the room.
+  // If client is the leader, set isLeader = true
   socket.emit("askLeaderID", userID, roomCode);
   socket.on("tellLeaderID", (leaderID) => {
     if (leaderID === userID) {
@@ -80,13 +84,26 @@ function Room(props) {
     }
   });
 
+  socket.on("userConnect", (userName) => {
+    setUsers([...users, userName]);
+  });
+  socket.on("userDisconnect", (dcUserName) => {
+    const newUsers = users.filter((userName) => userName === dcUserName);
+    setUsers([newUsers]);
+  });
+
   return (
     <div>
       <div>
         Room Code is: {roomCode}, User ID is: {userID}
       </div>
       <LeaderModeSelect isLeader={isLeader} />
-      {isLeader}
+      <div>isLeader={isLeader}</div>
+      <ul>
+        {users.map((item, index) => {
+          <li key={index}>item</li>;
+        })}
+      </ul>
       <div className="promptWrapper">Prompt here</div>
       <div className="responseWrapper"></div>
       <button>test</button>

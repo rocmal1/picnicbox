@@ -174,6 +174,7 @@ app.get("/joinroom/:roomCode", (req, res) => {
       let results = await collection.find(query).toArray();
 
       // If there is only one result, this was successful.
+      // A client is going to join the room.
       if (results.length === 1) {
         console.debug("Found room: ", results[0]);
         res.status(200);
@@ -215,15 +216,31 @@ const io = new Server(httpServer, {
 });
 
 io.on("connection", (socket) => {
-  console.log("User connected");
   socket.on("disconnect", () => {
     console.log("user disconnected");
   });
 
   socket.on("sendUserInfo", (data) => {
+    // If we don't have complete data, do nothing
+    if (!data.userID || !data.roomCode) {
+      return;
+    }
     console.debug("UserID", data.userID, "connected to room", data.roomCode);
     // Attach the socket (client) to a room for future broadcasting
     socket.join(data.roomCode);
+
+    // Check if the user is already in the room in the database
+    let collection = db.collection("rooms");
+    let query = { roomCode: data.roomCode };
+    collection.findOne(query).then((doc) => {
+      // If the userIDs field does not exist or if the userIDs array
+      // in the database does not already contains this userID, add the new userID to the room
+      if (!doc.userIDs || !doc.userIDs.includes(data.userID)) {
+        collection.updateOne(query, {
+          $push: { userIDs: data.userID },
+        });
+      }
+    });
   });
 
   // askLeaderID gets response tellLeaderID
