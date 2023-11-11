@@ -7,6 +7,7 @@ import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 
 import ErrorComponent from "../components/ErrorComponent";
+import LeaderModeSelect from "../components/LeaderModeSelect";
 
 const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
@@ -20,6 +21,8 @@ function Room(props) {
   const { roomCode } = useParams();
 
   const [userID, setUserID] = useState("");
+
+  const [isLeader, setIsLeader] = useState(false);
 
   // Error message is tracked as state and displayed in the ErrorComponent
   const [errorText, setErrorText] = useState("");
@@ -68,11 +71,24 @@ function Room(props) {
     console.debug("recieved hello ping");
   });
 
+  socket.emit("askLeaderID", userID, roomCode);
+  socket.on("tellLeaderID", (leaderID) => {
+    if (leaderID === userID) {
+      setIsLeader(true);
+    } else if (isLeader) {
+      setIsLeader(false);
+    }
+  });
+
   return (
     <div>
       <div>
         Room Code is: {roomCode}, User ID is: {userID}
       </div>
+      <LeaderModeSelect isLeader={isLeader} />
+      {isLeader}
+      <div className="promptWrapper">Prompt here</div>
+      <div className="responseWrapper"></div>
       <button>test</button>
     </div>
   );

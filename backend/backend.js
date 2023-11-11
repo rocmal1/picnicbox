@@ -84,8 +84,8 @@ app.post("/newroom", (req, res) => {
   // The collection we'll be working in
   let collection = db.collection("rooms");
 
-  // Post contains userID of the owner
-  let ownerUserID = req.body.userID;
+  // Post body contains userID of the owner
+  let leaderUserID = req.body.userID;
 
   // Generate a 4-character sequence of capital letters
   // Used to create room code
@@ -101,7 +101,7 @@ app.post("/newroom", (req, res) => {
 
   // Generate a room code then query the DB to see if it exists
   // If it already exists, generate another and try again up to maxRequests
-  async function tryToCreateRoom(ownerID) {
+  async function tryToCreateRoom(leaderID) {
     let newRoomCode = "";
     let maxRequests = 10;
     let countRequests = 0;
@@ -140,7 +140,7 @@ app.post("/newroom", (req, res) => {
       .insertOne({
         timestamp: Date.now(),
         roomCode: newRoomCode,
-        ownerUserID: ownerID,
+        leaderID: leaderID,
         debug: true,
       })
       .then((result) => {
@@ -157,7 +157,7 @@ app.post("/newroom", (req, res) => {
         res.send("Error: Unable to create new room in database:", error);
       });
   }
-  tryToCreateRoom(ownerUserID);
+  tryToCreateRoom(leaderUserID);
 });
 
 // When a client requests to join a room, they specify a room code in the GET uri
@@ -219,10 +219,30 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("user disconnected");
   });
+
   socket.on("sendUserInfo", (data) => {
     console.debug("UserID", data.userID, "connected to room", data.roomCode);
     // Attach the socket (client) to a room for future broadcasting
     socket.join(data.roomCode);
+  });
+
+  // askLeaderID gets response tellLeaderID
+  socket.on("askLeaderID", (userID, roomCode) => {
+    console.debug("UserID", userID, "requests leader of room", roomCode);
+
+    // Query the leaderID of the room and send it to the client
+    let collection = db.collection("rooms");
+    let query = { roomCode: roomCode };
+
+    collection
+      .findOne(query)
+      .then((results) => {
+        socket.emit("tellLeaderID", results.leaderID);
+      })
+      .catch((error) => {
+        socket.emit("tellLeaderID", null);
+        console.error(error);
+      });
   });
 });
 
@@ -234,6 +254,6 @@ setInterval(() => {
 //   console.debug("UserID", userID, "connected to room", roomCode);
 // });
 
-httpServer.listen(3001, () =>
-  console.log("Example app is listening on port 3001.")
-);
+httpServer.listen(3001, () => {
+  console.log("Example app is listening on port 3001.");
+});

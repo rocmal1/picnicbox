@@ -76,10 +76,10 @@ function Home() {
     axios
       .get(apiUrl + "/joinroom/" + roomCode)
       .then((response) => {
-        // Do this when the room is found
-        // If there is a room code in the response, enter the room
+        // If the room is found
         if (response.data.roomCode) {
-          navigate("/room/" + response.data.roomCode);
+          // Request a userID cookie
+          getUserID().then(() => navigate("/room/" + response.data.roomCode));
         }
       })
       .catch((error) => {
