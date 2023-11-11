@@ -11,7 +11,7 @@ const httpServer = createServer(app);
 app.use(express.json());
 
 // Import MongoDB for use with MongoDB Atlas database
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 // Use cors package middleware to allow cross-origin resource sharing
 const cors = require("cors");
@@ -65,6 +65,8 @@ app.post("/user", (req, res) => {
     .insertOne({
       timestamp: Date.now(),
       name: req.body.name,
+      roomID: null,
+      socketID: null,
       debug: true,
     })
     .then((result) => {
@@ -215,11 +217,38 @@ const io = new Server(httpServer, {
   },
 });
 
+// When websocket connection is established with client
 io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("user disconnected");
+    // We need to find the roomCode of the disconnected socket and alert the rest of the room they left
+    // First, find the userID based on socketID
+    const collection = db.collection("users");
+    const query = { socketID: socket.id };
+    collection.findOne(query).then((usersDoc) => {
+      try {
+        // Remove the user from the array of userIDs in the rooms doc
+        const roomCollection = db.collection("rooms");
+        const roomQuery = { _id: new ObjectId(usersDoc.roomID) };
+        roomCollection.updateOne(roomQuery, {
+          $pull: { userIDs: usersDoc.userID },
+        });
+      } catch (error) {
+        console.debug(error);
+      }
+    });
+
+    // Remove the room and the socket from the user doc
+    collection.updateOne(query, {
+      $set: { socketID: null },
+      $set: { roomID: null },
+    });
   });
 
+  // This signal is emitted by the client on pageload
+  // It contains the roomCode and userID of the client
+  // We store the userID in the room associated with the roomCode and store the socketID in the
+  // user associated with the userID
   socket.on("sendUserInfo", (data) => {
     // If we don't have complete data, do nothing
     if (!data.userID || !data.roomCode) {
@@ -229,9 +258,10 @@ io.on("connection", (socket) => {
     // Attach the socket (client) to a room for future broadcasting
     socket.join(data.roomCode);
 
+    // ** Add the user to the room in the database and vice-versa
     // Check if the user is already in the room in the database
-    let collection = db.collection("rooms");
-    let query = { roomCode: data.roomCode };
+    const collection = db.collection("rooms");
+    const query = { roomCode: data.roomCode };
     collection.findOne(query).then((doc) => {
       // If the userIDs field does not exist or if the userIDs array
       // in the database does not already contains this userID, add the new userID to the room
@@ -240,6 +270,15 @@ io.on("connection", (socket) => {
           $push: { userIDs: data.userID },
         });
       }
+
+      // ** Add the roomID to the user in the database
+      // ** Add the socketID to the user in the database
+      const userCollection = db.collection("users");
+      const userQuery = { _id: new ObjectId(data.userID) };
+      userCollection.updateOne(userQuery, {
+        $set: { roomID: doc._id },
+        $set: { socketID: socket.id },
+      });
     });
   });
 
