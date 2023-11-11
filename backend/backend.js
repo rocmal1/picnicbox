@@ -17,6 +17,9 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 app.use(cors());
 
+// This will add "debug: true" to all new DB entries
+const debug = true;
+
 // DATABASE SETUP
 //////////////////////
 // MongoDB Atlas URI includes the username and password.  Set this using an environment variable.
@@ -58,6 +61,25 @@ app.get("/", (req, res) => {
   res.send("Successful response.");
 });
 
+// DELETE ALL DOCUMENTS WITH "debug: true" IN THE DATABASE
+app.delete("/debug", (req, res) => {
+  let responseArray = [];
+  db.collections().then((collections) => {
+    for (let i = 0; i < collections.length; i++) {
+      collections[i].deleteMany({ debug: true }).then((result) => {
+        responseArray[i] =
+          "Deleted " +
+          result.deletedCount.toString() +
+          " documents from " +
+          collections[i].collectionName;
+        console.debug(responseArray[i]);
+      });
+    }
+    res.status(200);
+    res.send(responseArray);
+  });
+});
+
 app.post("/user", (req, res) => {
   let collection = db.collection("users");
   console.debug("Recieved request to add user name", req.body.name);
@@ -67,7 +89,7 @@ app.post("/user", (req, res) => {
       name: req.body.name,
       roomID: null,
       socketID: null,
-      debug: true,
+      debug: debug,
     })
     .then((result) => {
       res.status(200);
@@ -77,6 +99,25 @@ app.post("/user", (req, res) => {
     })
     .catch((error) => {
       res.status(500);
+      res.send(error);
+    });
+});
+
+// GET request to /user
+app.get("/user", (req, res) => {
+  let collection = db.collection("users");
+  let userID = req.body.userID;
+  let query = { userID: userID };
+  collection
+    .findOne(query)
+    .then((doc) => {
+      // If the user exists response CODE 200 (OK)
+      res.status(404);
+      res.send();
+    })
+    .catch((error) => {
+      // Otherwise tell the client that user does not exist
+      res.status(404);
       res.send(error);
     });
 });
@@ -143,7 +184,7 @@ app.post("/newroom", (req, res) => {
         timestamp: Date.now(),
         roomCode: newRoomCode,
         leaderID: leaderID,
-        debug: true,
+        debug: debug,
       })
       .then((result) => {
         console.debug(result);

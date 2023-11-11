@@ -133,8 +133,27 @@ function Home() {
       // If we cannot get the userID cookie, tell the server to create a new user and provide the ID
       // Then set the cookie
       try {
-        resolve(getCookie("userID"));
+        // Try to get the userID from the cookie
+        // If this doesn't work, error is thrown
+        let userID = getCookie("userID");
+        // Assuming cookie is found:
+        // 1. Send a GET req to the server to check if it exists in the DB
+        // 2. Server will response with STATUS 200 if exists and STATUS 404 if DNE
+        // 3. If STATUS 200, resolve this promise with the userID, otherwise create newUserID()
+        axios
+          .get(apiUrl + "/user", { userID: userID })
+          .then(() => {
+            resolve(userID);
+          })
+          .catch((innerError) => {
+            newUserID();
+          });
       } catch (error) {
+        newUserID();
+      }
+
+      // Sub-function which requests a new userID from the server
+      function newUserID() {
         // Request a new userID from the server
         // Expect: response containing a userID
         axios
