@@ -11,12 +11,17 @@ import LeaderModeSelect from "../components/LeaderModeSelect";
 
 const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
-// Connect to the server websocket
-const socket = io(apiUrl, {
-  reconnectionDelayMax: 10000,
-});
+let socket;
 
 function Room(props) {
+  // Only connect the socket when inside a room
+  if (window.location.pathname.includes("/room/")) {
+    // Connect to the server websocket
+    socket = io(apiUrl, {
+      reconnectionDelayMax: 10000,
+    });
+  }
+
   // Grab the roomCode from the react router path /room/:roomCode
   const { roomCode } = useParams();
 
@@ -84,12 +89,25 @@ function Room(props) {
     }
   });
 
-  socket.on("userConnect", (userName) => {
-    setUsers([...users, userName]);
-  });
-  socket.on("userDisconnect", (dcUserName) => {
-    const newUsers = users.filter((userName) => userName === dcUserName);
-    setUsers([newUsers]);
+  // socket.on("updateConnectedUsers", (userName) => {
+  //   setUsers();
+  // });
+
+  // socket.on("userConnect", (userName) => {
+  //   setUsers((prevArray) => [...prevArray, userName]);
+  //   console.debug("User connected: ", userName);
+  //   console.debug("Users:", users);
+  // });
+
+  // socket.on("userDisconnect", (dcUserName) => {
+  //   const newUsers = users.filter((userName) => userName === dcUserName);
+  //   setUsers([newUsers]);
+  // });
+
+  socket.on("updateUserNames", (userNamesArr) => {
+    setUsers(userNamesArr);
+    console.log("userNamesArray: ", userNamesArr);
+    console.log("usersArray:", users);
   });
 
   return (
@@ -100,9 +118,9 @@ function Room(props) {
       <LeaderModeSelect isLeader={isLeader} />
       <div>isLeader={isLeader}</div>
       <ul>
-        {users.map((item, index) => {
-          <li key={index}>item</li>;
-        })}
+        {users.map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
       </ul>
       <div className="promptWrapper">Prompt here</div>
       <div className="responseWrapper"></div>

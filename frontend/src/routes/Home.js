@@ -146,13 +146,15 @@ function Home() {
             resolve(userID);
           })
           .catch((innerError) => {
+            // If the cookie does not match a db entry
             newUserID();
           });
       } catch (error) {
+        // If there is no cookie
         newUserID();
       }
 
-      // Sub-function which requests a new userID from the server
+      // Sub-function which requests a new userID from the server and sets it as a cookie
       function newUserID() {
         // Request a new userID from the server
         // Expect: response containing a userID

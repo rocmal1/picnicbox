@@ -1,3 +1,6 @@
+// TODO:
+// Rewrite user-tracking system to emit the list of all connected users on disconnect/reconnect instead of just the one connecting/disconnecting
+
 // Load environment variables from './.env' into process.env variables
 const dotenv = require("dotenv").config();
 // socket.io websocket server
@@ -82,7 +85,6 @@ app.delete("/debug", (req, res) => {
 
 app.post("/user", (req, res) => {
   let collection = db.collection("users");
-  console.debug("Recieved request to add user name", req.body.name);
   collection
     .insertOne({
       timestamp: Date.now(),
@@ -112,7 +114,7 @@ app.get("/user", (req, res) => {
     .findOne(query)
     .then((doc) => {
       // If the user exists response CODE 200 (OK)
-      res.status(404);
+      res.status(200);
       res.send();
     })
     .catch((error) => {
@@ -184,6 +186,7 @@ app.post("/newroom", (req, res) => {
         timestamp: Date.now(),
         roomCode: newRoomCode,
         leaderID: leaderID,
+        userIDs: [],
         debug: debug,
       })
       .then((result) => {
@@ -261,29 +264,32 @@ const io = new Server(httpServer, {
 // When websocket connection is established with client
 io.on("connection", (socket) => {
   socket.on("disconnect", () => {
-    console.log("user disconnected");
+    // console.log("user disconnected");
     // We need to find the roomCode of the disconnected socket and alert the rest of the room they left
     // First, find the userID based on socketID
-    const collection = db.collection("users");
-    const query = { socketID: socket.id };
+    const userCollection = db.collection("users");
+    const userQuery = { socketID: socket.id };
 
     // Find the userDoc associated with the dc socket
-    collection.findOne(query).then((usersDoc) => {
+    userCollection.findOne(userQuery).then((usersDoc) => {
+      // Remove the user's userID from the array of userIDs in the rooms doc
       try {
-        // Remove the user's userID from the array of userIDs in the rooms doc
         const roomCollection = db.collection("rooms");
-        console.log("RoomID in User is: ", usersDoc);
         const roomQuery = { _id: usersDoc.roomID };
+
+        roomCollection.findOne(roomQuery).then((roomDoc) => {
+          // Emit to the socket room that the userName has disconnected
+          io.to(roomDoc.roomCode).emit("userDisconnect", usersDoc.name);
+        });
+
         roomCollection.updateOne(roomQuery, {
           $pull: { userIDs: usersDoc._id.toString() },
         });
-      } catch (error) {
-        console.debug(error);
-      }
+      } catch (error) {}
     });
 
     // Remove the room and the socket from the user doc
-    collection.updateOne(query, {
+    userCollection.updateOne(userQuery, {
       $set: { socketID: "", roomID: "" },
     });
   });
@@ -298,35 +304,67 @@ io.on("connection", (socket) => {
       return;
     }
     console.debug("UserID", data.userID, "connected to room", data.roomCode);
+
     // Attach the socket (client) to a room for future broadcasting
     socket.join(data.roomCode);
 
-    // ** Add the user to the room in the database and vice-versa
-    // Check if the user is already in the room in the database
-    const collection = db.collection("rooms");
-    const query = { roomCode: data.roomCode };
-    collection.findOne(query).then((doc) => {
-      // If the userIDs field does not exist or if the userIDs array
-      // in the database does not already contains this userID, add the new userID to the room
-      if (!doc.userIDs || !doc.userIDs.includes(data.userID)) {
-        collection.updateOne(query, {
-          $push: { userIDs: data.userID },
-        });
-      }
+    // ** Add the user to the room document and vice-versa
 
-      // ** Add the roomID to the user in the database
-      // ** Add the socketID to the user in the database
-      const userCollection = db.collection("users");
-      const userQuery = { _id: new ObjectId(data.userID) };
-      userCollection.updateOne(userQuery, {
-        $set: { roomID: doc._id, socketID: socket.id },
-      });
+    const roomCollection = db.collection("rooms");
+    const roomQuery = { roomCode: data.roomCode };
+    const userCollection = db.collection("users");
+    const userQuery = { _id: new ObjectId(data.userID) };
+
+    roomCollection.findOne(roomQuery).then((roomDoc) => {
+      (async () => {
+        // Retrieve the room doc from the database
+        let roomDoc = await roomCollection.findOne(roomQuery);
+
+        let userNames = [];
+        let currentlyConnectedUserIDs = roomDoc.userIDs;
+
+        // If the current userID is not listed in the room, add it
+        if (!roomDoc.userIDs.includes(data.userID)) {
+          await roomCollection.updateOne(roomQuery, {
+            $push: { userIDs: data.userID },
+          });
+          currentlyConnectedUserIDs = [
+            ...currentlyConnectedUserIDs,
+            data.userID,
+          ];
+        }
+
+        // Retrieve the updated room doc from the database
+        roomDoc = await roomCollection.findOne(roomQuery);
+
+        // Get usernames and send to the clients as emit("updateUserNames")
+        console.log("currentlyConnectedUserIDs", currentlyConnectedUserIDs);
+        for (let i = 0; i < currentlyConnectedUserIDs.length; i++) {
+          // Loop through the currentlyConnecetedUserIDs and get each's username
+          let curUserDoc = await userCollection.findOne(
+            new ObjectId(currentlyConnectedUserIDs[i])
+          );
+          let curUserName = curUserDoc.name;
+          // // console.log(
+          //   "UserID: ",
+          //   currentlyConnectedUserIDs[i],
+          //   "User Name:",
+          //   curUserName
+          // );
+          userNames = [...userNames, curUserName];
+          // console.log(i);
+          if (i === currentlyConnectedUserIDs.length - 1) {
+            console.log(":: Usernames:", userNames);
+            io.to(data.roomCode).emit("updateUserNames", userNames);
+          }
+        }
+      })();
     });
   });
 
   // askLeaderID gets response tellLeaderID
   socket.on("askLeaderID", (userID, roomCode) => {
-    console.debug("UserID", userID, "requests leader of room", roomCode);
+    // console.debug("UserID", userID, "requests leader of room", roomCode);
 
     // Query the leaderID of the room and send it to the client
     let collection = db.collection("rooms");
