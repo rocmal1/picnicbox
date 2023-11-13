@@ -1,0 +1,35 @@
+room
+- timestamp
+- code
+- userIds[]
+- leaderId
+- debug
+
+CREATING A ROOM
+0. Client determines if a user_id cookie exists.
+1. Client sends a POST request to /room/new containing a
+username and (if exists as cookie) a user_id.
+2. Server creates a new room entry.
+3. If the Client did not provide a user_id, the Server
+generates one.
+4. Server creates a new user object, containing the Client
+username and user_id.
+5. Server responds to Client, providing the room's code.
+6. Client navigates to the room.
+
+JOINING A ROOM
+0. Client determines if a user_id cookie exists.
+1. Client sends POST request to /room/:code containing
+username and user_id if it exists.
+2. Server creates a new user object, containing the Client
+username and user_id, with empty socket_id.
+3. Server responds to client with OK.
+4. Client navigates to /room/:code
+5. Client opens websocket with Server.
+6. Event: Client connects to Server - Client emit's
+ClientConnectEvent, containing userID.
+7. Server finds user object with user_id, then sets
+socket_id to the id of the current socket.
+8. Server responds with an array of the usernames of all
+users
+

@@ -1,5 +1,6 @@
 // *** Package Imports
 import { useState, useRef, useEffect } from "react";
+import { socket } from "../socket";
 // Axios is used to handle HTTP requests
 import axios from "axios";
 // useNavigate is used to push URLs to the user
@@ -13,6 +14,18 @@ import { setCookie, getCookie } from "../helpers";
 // *** Environment Variables
 // const apiUrl = process.env.REACT_APP_BACKEND_URL;
 const apiUrl = "http://localhost:3001";
+
+// CREATING A ROOM
+// 0. Client determines if a user_id cookie exists.
+// 1. Client sends a POST request to /room/new containing a
+// username and (if exists as cookie) a user_id.
+// 2. Server creates a new room entry.
+// 3. If the Client did not provide a user_id, the Server
+// generates one.
+// 4. Server creates a new user object, containing the Client
+// username and user_id.
+// 5. Server responds to Client, providing the room's code.
+// 6. Client navigates to the room.
 
 function Home() {
   // ** STATE
@@ -28,6 +41,19 @@ function Home() {
 
   // ** Constant values
   const NAME_MAX_LENGTH = 12;
+
+  useEffect(() => {
+    function onConnect() {
+      console.log("User connected.", socket.id);
+    }
+
+    function onDisconnect() {
+      console.log("User disconnected.", socket.id);
+    }
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+  }, []);
 
   // ** USE EFFECT
   // Update remaining characters when name changes
@@ -56,7 +82,6 @@ function Home() {
     setName(e.target.value);
   };
 
-  // Query the server to find if the room exists. If it does, try to join the room.
   const handleJoinRoomSubmit = (e) => {
     // Reset the error text
     setErrorText("");
@@ -70,7 +95,41 @@ function Home() {
       setErrorText("Error: Please enter a name");
       return;
     }
+
     console.log("Attempting to join room: ", roomCode);
+
+    //   }
+    //   // Send a GET request to get the room data
+    //   axios
+    //     .get(apiUrl + "/joinroom/" + roomCode)
+    //     .then((response) => {
+    //       // If the room is found
+    //       if (response.data.roomCode) {
+    //         // Request a userID cookie
+    //         getUserID().then(() => navigate("/room/" + response.data.roomCode));
+    //       }
+    //     })
+    //     .catch((error) => {
+    //       // Per Axios documentation: https://github.com/axios/axios#handling-errors
+    //       if (error.response) {
+    //         // The request was made and the server responded with status code that is not in 2XX
+    //         // If it is 404 we know the room was not found
+    //         if (error.response.status === 404) {
+    //           console.error("Room code", roomCode, "does not exist");
+    //           setErrorText("Room " + roomCode + " does not exist");
+    //           return;
+    //         }
+    //       } else if (error.request) {
+    //         // No response was recieved from the server
+    //         console.error(error.request);
+    //         setErrorText("Unable to contact server");
+    //       } else {
+    //         // Something happened when setting up the request which triggered an error
+    //         console.error("An error occurred while joining room ", roomCode);
+    //         setErrorText("An error occurred while joining room " + roomCode);
+    //       }
+    //     });
+    // };
 
     // Send a GET request to get the room data
     axios
@@ -111,18 +170,19 @@ function Home() {
       return;
     }
 
-    console.log("Attempting to create room");
-    getUserID().then((userID) => {
-      axios.post(apiUrl + "/newroom", { userID: userID }).then((response) => {
-        if (response.status === 200) {
-          console.debug("Entering room", response.data.roomCode);
-          navigate("/room/" + response.data.roomCode);
-        } else {
-          // On server error, display the error text
-          setErrorText(response.data);
-        }
+    // Send POST to /room/new with user's name
+    axios
+      .post(apiUrl + "/room/new", { name: name })
+      .then((res) => {
+        // Response includes: userId of the new user (this client) and room code of the new room
+        // Set the userId as a cookie
+        setCookie("userId", res.data.userId, 300000);
+        // Navigate to the new room
+        navigate("/room/" + res.data.code);
+      })
+      .catch((error) => {
+        console.error(error);
       });
-    });
   };
 
   // TODO: Make it so that when a user already has a cookie with a UserID, but has a
