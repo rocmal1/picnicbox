@@ -84,6 +84,63 @@ app.delete("/debug", (req, res) => {
   });
 });
 
+// *** Client requests to join a room
+app.post("/join/:roomCode/", (req, res) => {
+  const roomCode = req.params.roomCode;
+  console.log("Recieved request to join", roomCode);
+  const name = req.body.name;
+  const userId = req.body.userId;
+
+  (async () => {
+    // If the requested room DNE then respond 404
+    const roomDoc = await roomColl.findOne({ code: roomCode });
+    console.log("roomDoc is", roomDoc);
+    if (!roomDoc) {
+      console.log("Room", roomCode, "DNE");
+      res.status(404).send("Room '", roomCode, "' does not exist");
+    }
+
+    // If the client has a userId cookie, check if they are re-joining the room
+    if (userId) {
+      const thisUserIfInRoom = roomDoc.users.find(
+        (user) => user._id.toString() === req.body.userId
+      );
+      if (thisUserIfInRoom) {
+        // Update their name in db if they are submitting a different one
+        if (thisUserIfInRoom.name !== name) {
+          let query = { code: roomCode, "users._id": thisUserIfInRoom._id };
+          await roomColl.updateOne(query, {
+            $set: { "users.$.name": socket.id },
+          });
+        }
+        // Tell client it's OK to re-join the room
+        res.status(200);
+        res.send({ code: roomCode, userId: userId });
+      }
+    }
+
+    // No cookie sent means we must create a user for that room before the client may join
+    let newUser = {
+      _id: new ObjectId(),
+      name: name,
+      socketId: "",
+    };
+    // Add the new user to the room
+    const query = { code: roomCode };
+    const update = {
+      $push: {
+        users: {
+          $each: [newUser],
+        },
+      },
+    };
+    await roomColl.updateOne(query, update);
+
+    res.status(200);
+    res.send({ code: roomCode, userId: newUser._id.toString() });
+  })();
+});
+
 // *** Client requests to make a new room
 app.post("/room/new", (req, res) => {
   (async () => {
@@ -173,105 +230,51 @@ app.post("/room/new", (req, res) => {
   })();
 });
 
-// // GET request to /user
-// app.get("/user", (req, res) => {
-//   let collection = db.collection("users");
-//   let userID = req.body.userID;
-//   let query = { userID: userID };
-//   collection
-//     .findOne(query)
-//     .then((doc) => {
-//       // If the user exists response CODE 200 (OK)
-//       res.status(200);
-//       res.send();
-//     })
-//     .catch((error) => {
-//       // Otherwise tell the client that user does not exist
-//       res.status(404);
-//       res.send(error);
-//     });
-// });
+// // When a client requests to join a room, they specify a room code in the GET uri
+// app.get("/room/:roomCode", (req, res) => {
+//   // Grab the room code from the URL parameters
+//   let roomCode = req.params.roomCode;
+//   console.debug("Recieved request to join room:", roomCode);
 
-// // A post request to /newroom will create a new room and return the room code to the client
-// app.post("/newroom", (req, res) => {
-//   // The collection we'll be working in
-//   let collection = db.collection("rooms");
+//   (async () => {
+//     try {
+//       // Query if the room exists
+//       let query = { code: roomCode };
+//       let results = await roomColl.find(query).toArray();
 
-//   // Post body contains userID of the owner
-//   let leaderUserID = req.body.userID;
-
-//   // Generate a 4-character sequence of capital letters
-//   // Used to create room code
-//   function generateRandomLetters(length) {
-//     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-//     let result = "";
-//     for (let i = 0; i < length; i++) {
-//       const randomIndex = Math.floor(Math.random() * letters.length);
-//       result += letters.charAt(randomIndex);
-//     }
-//     return result;
-//   }
-
-//   // Generate a room code then query the DB to see if it exists
-//   // If it already exists, generate another and try again up to maxRequests
-//   async function tryToCreateRoom(leaderID) {
-//     let newRoomCode = "";
-//     let maxRequests = 10;
-//     let countRequests = 0;
-//     while (!newRoomCode && countRequests <= maxRequests) {
-//       countRequests++;
-//       let tryRoomCode = generateRandomLetters(4);
-//       let query = { code: tryRoomCode };
-//       console.debug("Searching for room code:", newRoomCode);
-//       try {
-//         let results = await collection.find(query).toArray();
-//         if (results.length > 0) {
-//           continue;
-//         }
-//         newRoomCode = tryRoomCode;
-//       } catch (error) {
-//         console.error(error);
-//       }
-//     }
-
-//     // Throw an error if the newRoomCode is still = ""
-//     if (newRoomCode === "") {
-//       console.error(
-//         "Error: Could not create a room after",
-//         countRequests,
-//         "attempts"
-//       );
-//       res.status(500);
-//       res.send(
-//         "Error: Could not create a room after",
-//         countRequests,
-//         "attempts"
-//       );
-//     }
-//     // Create the room object and add it to the database
-//     collection
-//       .insertOne({
-//         timestamp: Date.now(),
-//         roomCode: newRoomCode,
-//         leaderID: leaderID,
-//         userIDs: [],
-//         debug: debug,
-//       })
-//       .then((result) => {
-//         console.debug(result);
-//         // Send the roomCode of the object to the client
-//         // TODO:  Optimize this to use the unique _id instead of the roomCode.
-//         //        Requires frontend to send join request using _id.
+//       // If there is only one result, this was successful.
+//       // A client is going to join the room.
+//       if (results.length === 1) {
 //         res.status(200);
-//         res.send({ roomCode: newRoomCode });
-//       })
-//       .catch((error) => {
-//         console.error("Error: Unable to create new room in database:", error);
+//         res.send({ code: roomCode });
+//       }
+
+//       // ** Error handling
+//       else if (results.length === 0) {
+//         console.error("Could not find room:", roomCode);
+//         res.status(404);
+//         res.send();
+//       } else {
+//         console.error(
+//           "Error: Multiple rooms found when trying join on",
+//           roomCode,
+//           "\nSee:",
+//           results
+//         );
 //         res.status(500);
-//         res.send("Error: Unable to create new room in database:", error);
-//       });
-//   }
-//   tryToCreateRoom(leaderUserID);
+//         res.send(
+//           "Error: Multiple rooms found with code",
+//           roomCode,
+//           ". This is a database error."
+//         );
+//       }
+//     } catch (e) {
+//       // If there is an actual error of some other kind
+//       console.error("Error: Unable to query the database for rooms - see: ", e);
+//       res.status(500);
+//       res.send("Error: Unable to query the database for rooms.");
+//     }
+//   })();
 // });
 
 // // When a client requests to join a room, they specify a room code in the GET uri
