@@ -230,100 +230,17 @@ app.post("/room/new", (req, res) => {
   })();
 });
 
-// // When a client requests to join a room, they specify a room code in the GET uri
-// app.get("/room/:roomCode", (req, res) => {
-//   // Grab the room code from the URL parameters
-//   let roomCode = req.params.roomCode;
-//   console.debug("Recieved request to join room:", roomCode);
+async function getRoomConnectedUsersAndLeader(roomQuery) {
+  const roomDoc = await roomColl.findOne(roomQuery);
+  // Get all users that have socketIds and update the room with their usernames
+  // Filter out users with empty socketIds
+  let usersArray = roomDoc.users.filter((user) => user.socketId);
+  let leaderUser = usersArray.find(
+    (user) => user._id.toString() === roomDoc.leaderId.toString()
+  );
 
-//   (async () => {
-//     try {
-//       // Query if the room exists
-//       let query = { code: roomCode };
-//       let results = await roomColl.find(query).toArray();
-
-//       // If there is only one result, this was successful.
-//       // A client is going to join the room.
-//       if (results.length === 1) {
-//         res.status(200);
-//         res.send({ code: roomCode });
-//       }
-
-//       // ** Error handling
-//       else if (results.length === 0) {
-//         console.error("Could not find room:", roomCode);
-//         res.status(404);
-//         res.send();
-//       } else {
-//         console.error(
-//           "Error: Multiple rooms found when trying join on",
-//           roomCode,
-//           "\nSee:",
-//           results
-//         );
-//         res.status(500);
-//         res.send(
-//           "Error: Multiple rooms found with code",
-//           roomCode,
-//           ". This is a database error."
-//         );
-//       }
-//     } catch (e) {
-//       // If there is an actual error of some other kind
-//       console.error("Error: Unable to query the database for rooms - see: ", e);
-//       res.status(500);
-//       res.send("Error: Unable to query the database for rooms.");
-//     }
-//   })();
-// });
-
-// // When a client requests to join a room, they specify a room code in the GET uri
-// app.get("/joinroom/:roomCode", (req, res) => {
-//   // Grab the room code from the URL parameters
-//   let roomCode = req.params.roomCode;
-//   console.debug("Recieved request to join room:", roomCode);
-
-//   // Query if the room exists
-//   let collection = db.collection("rooms");
-//   let query = { roomCode: roomCode };
-//   (async () => {
-//     try {
-//       let results = await collection.find(query).toArray();
-
-//       // If there is only one result, this was successful.
-//       // A client is going to join the room.
-//       if (results.length === 1) {
-//         console.debug("Found room: ", results[0]);
-//         res.status(200);
-//         res.send({ roomCode: roomCode });
-//       }
-
-//       // If there are no results, the room does not exist.
-//       else if (results.length === 0) {
-//         console.debug("Could not find room:", roomCode);
-//         res.status(404);
-//         res.send();
-//       }
-
-//       // If there are multiple results, this is an error.
-//       else {
-//         console.error(
-//           "Error: Multiple rooms found when trying join on",
-//           roomCode,
-//           "\nSee:",
-//           results
-//         );
-//         res.status(500);
-//         res.send("Error: Multiple rooms found. This is a database error.");
-//       }
-//     } catch (e) {
-//       // If there is an actual error of some other kind
-//       console.error("Error: Unable to query the database for rooms - see: ", e);
-//       res.status(500);
-//       res.send("Error: Unable to query the database for rooms.");
-//     }
-//   })();
-// });
+  return { usersArray, leaderUser };
+}
 
 const io = new Server(httpServer, {
   // Required for cross-origin resource sharing
@@ -335,43 +252,74 @@ const io = new Server(httpServer, {
 io.on("connection", (socket) => {
   console.log("User connected");
   socket.on("cSendUserInfo", (data) => {
+    let roomCode = data.code;
+    let userId = data.userId;
     (async () => {
       // Update the user's socketId db entry
-      if (!data.code || !data.userId) {
+      if (!roomCode || !userId) {
         return;
       }
       console.log("Recieved userInfo: ", data);
-      let thisUserId = new ObjectId(data.userId);
-      let query = { code: data.code, "users._id": thisUserId };
+      const thisUserId = new ObjectId(userId);
+      const query = { code: data.code, "users._id": thisUserId };
+      // Update the user's socketId & join socket room
       await roomColl.updateOne(query, {
         $set: { "users.$.socketId": socket.id },
       });
+      socket.join(roomCode);
 
-      // Add the user to the socket room
-      socket.join(data.code);
-
+      const roomDoc = await roomColl.findOne({ code: roomCode });
       // Get all users that have socketIds and update the room with their usernames
-      let roomDoc = await roomColl.findOne({
-        code: data.code,
-      });
-      let usersArray = roomDoc.users;
-      let userNamesArray = [];
+      // Filter out users with empty socketIds
+      let usersArray = roomDoc.users.filter((user) => user.socketId);
       let leaderUser = usersArray.find(
         (user) => user._id.toString() === roomDoc.leaderId.toString()
       );
-      let leaderName = leaderUser.name;
-      io.to(data.code).emit("sUpdateConnectedUsers", {
-        users: roomDoc.users,
-        leaderName: leaderName,
+
+      io.to(roomCode).emit("sUpdateConnectedUsers", {
+        users: usersArray,
+        leaderName: leaderUser.name,
       });
     })();
   });
 
   socket.on("disconnect", () => {
     console.log("User disconnected");
-    // Remove socketId from db entry
-    let query = { "users.socketId": socket.id };
-    roomColl.updateOne(query, { $set: { "users.$.socketId": "" } });
+    try {
+      (async () => {
+        const query = { "users.socketId": socket.id };
+        const roomDoc = await roomColl.findOne(query);
+        const roomCode = roomDoc.code;
+
+        // Remove socketId from db entry
+        await roomColl.updateOne(query, {
+          $set: { "users.$.socketId": "" },
+        });
+        const roomDocAfterDisconnect = await roomColl.findOne({
+          code: roomCode,
+        });
+
+        // Get all users that have socketIds and update the room with their usernames
+        // Filter out users with empty socketIds
+        let usersArray = roomDocAfterDisconnect.users.filter(
+          (user) => user.socketId !== ""
+        );
+        let leaderUser = usersArray.find(
+          (user) => user._id.toString() === roomDoc.leaderId.toString()
+        );
+        // If the leaderUser is the one who disconnected, set leader to the next user
+        if (!leaderUser) leaderUser = usersArray[0];
+
+        console.debug("usersArrayAfterFilter:", usersArray);
+
+        io.to(roomCode).emit("sUpdateConnectedUsers", {
+          users: usersArray,
+          leaderName: leaderUser.name,
+        });
+      })();
+    } catch (e) {
+      console.log(e);
+    }
   });
 });
 // // When websocket connection is established with client
