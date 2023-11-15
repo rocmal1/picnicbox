@@ -6,6 +6,8 @@ import { useParams } from "react-router-dom";
 
 import { socket } from "../socket.js";
 
+import "./Room.css";
+
 import ErrorComponent from "../components/ErrorComponent";
 import LeaderModeSelect from "../components/LeaderModeSelect";
 
@@ -25,9 +27,11 @@ function Room(props) {
 
   const [userId, setUserId] = useState("");
 
-  const [leaderName, setLeaderName] = useState("");
+  const [leaderUser, setLeaderUser] = useState("");
 
   const [usernames, setUsernames] = useState([]);
+
+  const [currentPrompt, setCurrentPrompt] = useState("What to call your dog?");
 
   // Error message is tracked as state and displayed in the ErrorComponent
   const [errorText, setErrorText] = useState("");
@@ -70,48 +74,60 @@ function Room(props) {
   }
 
   socket.on("sUpdateConnectedUsers", (data) => {
+    if (!data.leaderUser || !data.users) return;
     // Update usernames
     let newUsernames = [];
     for (let i = 0; i < data.users.length; i++) {
       newUsernames.push(data.users[i].name);
     }
     setUsernames(newUsernames);
+    console.log("New Usernames", newUsernames);
+    console.log("Leader User", leaderUser);
 
     // TODO: Switch from leaderId to leaderName for ease of displaying crown
     // Update leaderId
-    if (data.leaderName !== leaderName) setLeaderName(data.leaderName);
+    if (data.leaderUser !== leaderUser) setLeaderUser(data.leaderUser);
   });
 
-  // socket.on("userConnect", (userName) => {
-  //   setUsers((prevArray) => [...prevArray, userName]);
-  //   console.debug("User connected: ", userName);
-  //   console.debug("Users:", users);
-  // });
+  // Once the leader finished setup, take the setup options (incl. lists)
+  // and add them to the room in the db
+  const handleLeaderFinishSetup = (options) => {
+    // Options: { gamemode: "quippage", lists: []}
+    console.log("options:", options);
+    const gamemode = options.gamemode;
+    const gameLists = options.gameLists;
 
-  // socket.on("userDisconnect", (dcUserName) => {
-  //   const newUsers = users.filter((userName) => userName === dcUserName);
-  //   setUsers([newUsers]);
-  // });
-
-  // socket.on("updateUserNames", (userNamesArr) => {
-  //   setUsers(userNamesArr);
-  //   console.log("userNamesArray: ", userNamesArr);
-  //   console.log("usersArray:", users);
-  // });
+    const emitData = {
+      code: roomCode,
+      gamemode: gamemode,
+      gameLists: gameLists,
+    };
+    socket.emit("cSetupComplete");
+  };
 
   return (
     <div>
       <div>
         Room Code is: {roomCode}, User ID is: {userId}
       </div>
+      <LeaderModeSelect
+        isLeader={userId === leaderUser._id}
+        leaderName={leaderUser.name}
+        handleLeaderFinishSetup={handleLeaderFinishSetup}
+      />
       <ul>
         {usernames.map((name, index) => {
-          if (name === leaderName) return <li key={index}>👑 {name}</li>;
+          if (name === leaderUser.name) return <li key={index}>👑 {name}</li>;
           return <li key={index}>{name}</li>;
         })}
       </ul>
-      <div className="promptWrapper">Prompt here</div>
-      <div className="responseWrapper"></div>
+      <div className="promptWrapper">
+        <div className="promptCard">{currentPrompt}</div>
+        <input type="text" placeholder="response"></input>
+      </div>
+      <div className="responseWrapper">
+        <div className="responseCard"></div>
+      </div>
       <button>test</button>
     </div>
   );

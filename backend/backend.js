@@ -84,6 +84,19 @@ app.delete("/debug", (req, res) => {
   });
 });
 
+// *** Client requests available gamelists for quippage
+app.get("/lists/quippage", (req, res) => {
+  const quippageListsColl = db.collection("gamelists_quippage");
+  quippageListsColl
+    .find()
+    .toArray()
+    .then((gamelists) => {
+      console.log("Sending", gamelists);
+      res.status(200);
+      res.send(gamelists);
+    });
+});
+
 // *** Client requests to join a room
 app.post("/join/:roomCode/", (req, res) => {
   const roomCode = req.params.roomCode;
@@ -230,18 +243,9 @@ app.post("/room/new", (req, res) => {
   })();
 });
 
-async function getRoomConnectedUsersAndLeader(roomQuery) {
-  const roomDoc = await roomColl.findOne(roomQuery);
-  // Get all users that have socketIds and update the room with their usernames
-  // Filter out users with empty socketIds
-  let usersArray = roomDoc.users.filter((user) => user.socketId);
-  let leaderUser = usersArray.find(
-    (user) => user._id.toString() === roomDoc.leaderId.toString()
-  );
-
-  return { usersArray, leaderUser };
-}
-
+///
+/// ************************ WEBSOCKET ************************
+///
 const io = new Server(httpServer, {
   // Required for cross-origin resource sharing
   cors: {
@@ -272,13 +276,17 @@ io.on("connection", (socket) => {
       // Get all users that have socketIds and update the room with their usernames
       // Filter out users with empty socketIds
       let usersArray = roomDoc.users.filter((user) => user.socketId);
+      // let leaderUser = usersArray.find(
+      //   (user) => user._id.toString() === roomDoc.leaderId.toString()
+      // );
+      let leaderId = roomDoc.leaderId;
       let leaderUser = usersArray.find(
-        (user) => user._id.toString() === roomDoc.leaderId.toString()
+        (user) => user._id.toString() === leaderId.toString()
       );
-
+      if (!leaderUser) leaderUser = usersArray[0];
       io.to(roomCode).emit("sUpdateConnectedUsers", {
         users: usersArray,
-        leaderName: leaderUser.name,
+        leaderUser: leaderUser,
       });
     })();
   });
@@ -289,6 +297,7 @@ io.on("connection", (socket) => {
       (async () => {
         const query = { "users.socketId": socket.id };
         const roomDoc = await roomColl.findOne(query);
+        if (!roomDoc) return;
         const roomCode = roomDoc.code;
 
         // Remove socketId from db entry
@@ -314,142 +323,28 @@ io.on("connection", (socket) => {
 
         io.to(roomCode).emit("sUpdateConnectedUsers", {
           users: usersArray,
-          leaderName: leaderUser.name,
+          leaderUser: leaderUser,
         });
       })();
     } catch (e) {
       console.log(e);
     }
   });
+
+  socket.on("cRequestGameLists", (data) => {
+    switch (data.gamemode) {
+      case "Quippage":
+        (async () => {
+          const coll = db.collection("quippage_gamelists");
+          const gameLists = coll.find().toArray();
+          io.emit;
+        })();
+
+      default:
+        return;
+    }
+  });
 });
-// // When websocket connection is established with client
-// io.on("connection", (socket) => {
-//   socket.on("disconnect", () => {
-//     // console.log("user disconnected");
-//     // We need to find the roomCode of the disconnected socket and alert the rest of the room they left
-//     // First, find the userID based on socketID
-//     const userCollection = db.collection("users");
-//     const userQuery = { socketID: socket.id };
-
-//     // Find the userDoc associated with the dc socket
-//     userCollection.findOne(userQuery).then((usersDoc) => {
-//       // Remove the user's userID from the array of userIDs in the rooms doc
-//       try {
-//         const roomCollection = db.collection("rooms");
-//         const roomQuery = { _id: usersDoc.roomID };
-
-//         roomCollection.findOne(roomQuery).then((roomDoc) => {
-//           // Emit to the socket room that the userName has disconnected
-//           io.to(roomDoc.roomCode).emit("userDisconnect", usersDoc.name);
-//         });
-
-//         roomCollection.updateOne(roomQuery, {
-//           $pull: { userIDs: usersDoc._id.toString() },
-//         });
-//       } catch (error) {}
-//     });
-
-//     // Remove the room and the socket from the user doc
-//     userCollection.updateOne(userQuery, {
-//       $set: { socketID: "", roomID: "" },
-//     });
-//   });
-
-//   // This signal is emitted by the client on pageload
-//   // It contains the roomCode and userID of the client
-//   // We store the userID in the room associated with the roomCode and store the socketID in the
-//   // user associated with the userID
-//   socket.on("sendUserInfo", (data) => {
-//     // If we don't have complete data, do nothing
-//     if (!data.userID || !data.roomCode) {
-//       return;
-//     }
-//     console.debug("UserID", data.userID, "connected to room", data.roomCode);
-
-//     // Attach the socket (client) to a room for future broadcasting
-//     socket.join(data.roomCode);
-
-//     // ** Add the user to the room document and vice-versa
-
-//     const roomCollection = db.collection("rooms");
-//     const roomQuery = { roomCode: data.roomCode };
-//     const userCollection = db.collection("users");
-//     const userQuery = { _id: new ObjectId(data.userID) };
-
-//     roomCollection.findOne(roomQuery).then((roomDoc) => {
-//       (async () => {
-//         // Retrieve the room doc from the database
-//         let roomDoc = await roomCollection.findOne(roomQuery);
-
-//         let userNames = [];
-//         let currentlyConnectedUserIDs = roomDoc.userIDs;
-
-//         // If the current userID is not listed in the room, add it
-//         if (!roomDoc.userIDs.includes(data.userID)) {
-//           await roomCollection.updateOne(roomQuery, {
-//             $push: { userIDs: data.userID },
-//           });
-//           currentlyConnectedUserIDs = [
-//             ...currentlyConnectedUserIDs,
-//             data.userID,
-//           ];
-//         }
-
-//         // Retrieve the updated room doc from the database
-//         roomDoc = await roomCollection.findOne(roomQuery);
-
-//         // Get usernames and send to the clients as emit("updateUserNames")
-//         console.log("currentlyConnectedUserIDs", currentlyConnectedUserIDs);
-//         for (let i = 0; i < currentlyConnectedUserIDs.length; i++) {
-//           // Loop through the currentlyConnecetedUserIDs and get each's username
-//           let curUserDoc = await userCollection.findOne(
-//             new ObjectId(currentlyConnectedUserIDs[i])
-//           );
-//           let curUserName = curUserDoc.name;
-//           // // console.log(
-//           //   "UserID: ",
-//           //   currentlyConnectedUserIDs[i],
-//           //   "User Name:",
-//           //   curUserName
-//           // );
-//           userNames = [...userNames, curUserName];
-//           // console.log(i);
-//           if (i === currentlyConnectedUserIDs.length - 1) {
-//             console.log(":: Usernames:", userNames);
-//             io.to(data.roomCode).emit("updateUserNames", userNames);
-//           }
-//         }
-//       })();
-//     });
-//   });
-
-//   // askLeaderID gets response tellLeaderID
-//   socket.on("askLeaderID", (userID, roomCode) => {
-//     // console.debug("UserID", userID, "requests leader of room", roomCode);
-
-//     // Query the leaderID of the room and send it to the client
-//     let collection = db.collection("rooms");
-//     let query = { roomCode: roomCode };
-
-//     collection
-//       .findOne(query)
-//       .then((results) => {
-//         socket.emit("tellLeaderID", results.leaderID);
-//       })
-//       .catch((error) => {
-//         socket.emit("tellLeaderID", null);
-//         console.error(error);
-//       });
-//   });
-// });
-
-// setInterval(() => {
-//   io.to("HJME").emit("hello");
-// }, 5000);
-
-// io.on("sendUserInfo", (userID, roomCode) => {
-//   console.debug("UserID", userID, "connected to room", roomCode);
-// });
 
 httpServer.listen(3001, () => {
   console.log("Example app is listening on port 3001.");

@@ -1,0 +1,42 @@
+.wrapper {
+  display: flex;
+  background-color: lightblue;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.list-selector-item:hover {
+  color: red;
+}
+
+.list-selector-item {
+  cursor: default;
+  display: flex;
+  padding: 4px;
+  margin: 5px, 0, 0, 5px;
+}
+/* For loading elipses on non-leader user page . .. ... */
+.loading::after {
+  display: inline-block;
+  animation: dotty steps(1, end) 2s infinite;
+  content: "";
+}
+
+@keyframes dotty {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+  100% {
+    content: "";
+  }
+}
