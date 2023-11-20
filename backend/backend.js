@@ -17,6 +17,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 // Use cors package middleware to allow cross-origin resource sharing
 const cors = require("cors");
+const { rmSync } = require("node:fs");
 app.use(cors());
 
 // This will add "debug: true" to all new DB entries
@@ -151,6 +152,16 @@ app.post("/join/:roomCode/", (req, res) => {
 
     res.status(200);
     res.send({ code: roomCode, userId: newUser._id.toString() });
+  })();
+});
+
+// Client checks if a room exists
+app.get("/room/:roomCode", (req, res) => {
+  const roomCode = req.params.roomCode;
+  (async () => {
+    const roomDoc = await roomColl.findOne({ code: roomCode });
+    if (roomDoc) res.status(200).send();
+    res.status(404).send();
   })();
 });
 

@@ -1,10 +1,121 @@
-.Home {
+body {
+}
+
+.home {
+  height: 50vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: #d8829d;
+  width: 100%;
+  color: whitesmoke;
+  font-family: "Bubblegum Sans", sans-serif;
+  font-weight: 800;
+  font-size: 3.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0.4rem 0 0.4rem 0;
+}
+
+.main {
+  flex: 1; /* This will make .content expand to fill the remaining space */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   flex-direction: column;
+  /* border: 1px solid red; */
+}
+
+.content {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 input {
   text-transform: uppercase;
+  border-radius: 14px;
+  border: 1px solid grey;
+  height: 44px;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 600;
+  width: 14rem;
+  text-align: center;
+  letter-spacing: 0.5rem;
+}
+
+input::placeholder {
+  font-size: 1rem;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.inputWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: auto;
+  margin: 1.2rem 0 0 0.1rem;
+}
+
+.inputTitle {
+  font-size: 1.4rem;
+  margin: 0rem 0 0.3rem 1.2rem;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.homeInput:focus {
+  border: 1px solid grey;
+  outline: none;
+}
+
+button {
+  border-radius: 0.8rem;
+  border: 1px solid grey;
+  color: whitesmoke;
+  font-weight: 500;
+  background-color: #d8829d;
+  height: 55px;
+  font-size: 2rem;
+  padding: 0 2rem;
+  width: 14rem;
+}
+
+button:hover {
+  background-color: #e27899;
+}
+
+button:active {
+  background-color: #d63d6d;
+}
+
+#joinRoomSubmit {
+  width: 14rem;
+  margin-top: 13px;
+}
+
+#createRoomSubmit {
+  font-size: 1.6rem;
+}
+
+.horizontalRule {
+  width: 7rem; /* Adjust the width as needed */
+  height: 1px; /* Set the thickness of the line */
+  background-color: #ccc; /* Set the color of the line */
+  margin: 0 1rem;
+}
+
+.orWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
 }

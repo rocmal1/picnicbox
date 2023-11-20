@@ -14,18 +14,6 @@ import { setCookie, getCookie } from "../helpers";
 // const apiUrl = process.env.REACT_APP_BACKEND_URL;
 const apiUrl = "http://localhost:3001";
 
-// CREATING A ROOM
-// 0. Client determines if a user_id cookie exists.
-// 1. Client sends a POST request to /room/new containing a
-// username and (if exists as cookie) a user_id.
-// 2. Server creates a new room entry.
-// 3. If the Client did not provide a user_id, the Server
-// generates one.
-// 4. Server creates a new user object, containing the Client
-// username and user_id.
-// 5. Server responds to Client, providing the room's code.
-// 6. Client navigates to the room.
-
 function Home() {
   // *** HOOKS
   // ** STATE
@@ -33,11 +21,16 @@ function Home() {
   const [roomCode, setRoomCode] = useState("");
   const [name, setName] = useState("");
   const [userId, setUserId] = useState("");
+
+  const [inputStage, setInputStage] = useState(0);
   // Error message is tracked as state and displayed in the ErrorComponent
   const [errorText, setErrorText] = useState("");
 
+  // Used to prevent scrolling to focus on input on mobile devices
+  const [scrollPosition, setScrollPosition] = useState(null);
+
   // Used to track characters remaining in name
-  const charCounter = useRef(null);
+  const charCounter = useRef();
   // useNavigate is used to push URLs to the user in React Router
   const navigate = useNavigate();
 
@@ -49,7 +42,8 @@ function Home() {
   // ** USE EFFECT
   // Update remaining characters when name changes
   useEffect(() => {
-    charCounter.current.innerText = NAME_MAX_LENGTH - name.length;
+    if (charCounter.current)
+      charCounter.current.innerText = NAME_MAX_LENGTH - name.length;
   }, [name]);
 
   const handleRoomCodeInputChange = (e) => {
@@ -59,6 +53,7 @@ function Home() {
     e.target.value = val;
     // Update state to reflect new input
     setRoomCode(e.target.value);
+    setErrorText("");
   };
 
   const handleNameInputChange = (e) => {
@@ -78,27 +73,36 @@ function Home() {
     if (!roomCode) {
       return;
     }
-    // Ensure a name has been entered
-    if (!name) {
-      setErrorText("Error: Please enter a name");
-      return;
-    }
+    // // Ensure a name has been entered
+    // if (!name) {
+    //   setErrorText("Error: Please enter a name");
+    //   return;
+    // }
 
     console.log("Attempting to join room: ", roomCode);
 
     (async () => {
       try {
-        let res = await axios.post(apiUrl + "/join/" + roomCode, {
-          name: name,
-          userId: userId,
-        });
-        if (res.data.userId) setCookie("userId", res.data.userId, 300000);
-        navigate("/room/" + res.data.code);
+        let res = await axios.get(apiUrl + "/room/" + roomCode);
+        setInputStage(1);
       } catch (e) {
-        setErrorText(e.message);
-        console.log(e);
+        setErrorText("Room '" + roomCode + "' does not exist.");
       }
     })();
+
+    // (async () => {
+    //   try {
+    //     let res = await axios.post(apiUrl + "/join/" + roomCode, {
+    //       name: name,
+    //       userId: userId,
+    //     });
+    //     if (res.data.userId) setCookie("userId", res.data.userId, 300000);
+    //     navigate("/room/" + res.data.code);
+    //   } catch (e) {
+    //     setErrorText(e.message);
+    //     console.log(e);
+    //   }
+    // })();
   };
 
   const handleCreateRoomSubmit = (e) => {
@@ -174,34 +178,89 @@ function Home() {
     });
   }
 
+  // Used to prevent scrolling to focus on input on mobile devices
+  const handleInputFocus = (event) => {
+    // setScrollPosition(window.scrollY);
+    // event.target.blur();
+    // setTimeout(() => {
+    //   window.scrollTo(0, scrollPosition);
+    // }, 0);
+  };
+
   return (
-    <div className="Home">
-      <input
-        type="text"
-        placeholder="ROOM CODE"
-        onChange={handleRoomCodeInputChange}
-        maxLength="4"
-      />
-      <div>
-        <input
-          type="text"
-          placeholder="NAME"
-          onChange={handleNameInputChange}
-          maxLength={NAME_MAX_LENGTH}
-        />
-        <div className="charCounter" ref={charCounter}>
-          {NAME_MAX_LENGTH}
+    <div className="home">
+      <div className="header">picnicbox.tv</div>
+      <div className="main">
+        <div className="content">
+          {(() => {
+            switch (inputStage) {
+              case 0:
+                return (
+                  <>
+                    <div className="inputWrapper">
+                      <div className="inputTitle">Room Code</div>
+                      <input
+                        type="text"
+                        placeholder="ENTER 4-LETTER CODE"
+                        onChange={handleRoomCodeInputChange}
+                        onFocus={handleInputFocus}
+                        maxLength="4"
+                        className="homeInput"
+                        id="roomCodeInput"
+                      />
+                    </div>
+                    <div className="buttonWrapper">
+                      <button
+                        id="joinRoomSubmit"
+                        className="button"
+                        onClick={handleJoinRoomSubmit}
+                      >
+                        Join
+                      </button>
+                    </div>
+                    <ErrorComponent text={errorText} />
+                    <div className="orWrapper">
+                      <div className="horizontalRule"></div>OR
+                      <div className="horizontalRule"></div>
+                    </div>
+
+                    <div className="buttonWrapper">
+                      <button
+                        id="createRoomSubmit"
+                        className="button"
+                        onClick={handleCreateRoomSubmit}
+                      >
+                        Create Room
+                      </button>
+                    </div>
+                  </>
+                );
+              case 1:
+                return (
+                  <>
+                    <div className="inputWrapper">
+                      <div className="inputTitle">
+                        <div>Name</div>
+                        <div className="charCounter" ref={charCounter}></div>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="NAME"
+                        onChange={handleNameInputChange}
+                        onFocus={handleInputFocus}
+                        maxLength={NAME_MAX_LENGTH}
+                        className="homeInput"
+                        id="nameInput"
+                      />
+                    </div>
+                  </>
+                );
+              default:
+                return null; // or some default content if needed
+            }
+          })()}
         </div>
       </div>
-      <button id="joinRoomSubmit" onClick={handleJoinRoomSubmit}>
-        Join
-      </button>
-
-      <button id="createRoomSubmit" onClick={handleCreateRoomSubmit}>
-        Create Room
-      </button>
-
-      <ErrorComponent text={errorText} />
     </div>
   );
 }

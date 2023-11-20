@@ -19,5 +19,12 @@ const router = createBrowserRouter([
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <RouterProvider router={router} />
+  // Logo font
+  <>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Bubblegum+Sans"
+    ></link>
+    <RouterProvider router={router} />
+  </>
 );

@@ -89,6 +89,7 @@ function Room(props) {
     if (data.leaderUser !== leaderUser) setLeaderUser(data.leaderUser);
   });
 
+  // TODO: emit the options data, store the list prompts and id in the db under the room
   // Once the leader finished setup, take the setup options (incl. lists)
   // and add them to the room in the db
   const handleLeaderFinishSetup = (options) => {
