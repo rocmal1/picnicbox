@@ -73,45 +73,45 @@ function Home() {
     if (!roomCode) {
       return;
     }
-    // // Ensure a name has been entered
-    // if (!name) {
-    //   setErrorText("Error: Please enter a name");
-    //   return;
-    // }
 
     console.log("Attempting to join room: ", roomCode);
-
-    (async () => {
-      try {
-        let res = await axios.get(apiUrl + "/room/" + roomCode);
-        setInputStage(1);
-      } catch (e) {
-        setErrorText("Room '" + roomCode + "' does not exist.");
-      }
-    })();
-
-    // (async () => {
-    //   try {
-    //     let res = await axios.post(apiUrl + "/join/" + roomCode, {
-    //       name: name,
-    //       userId: userId,
-    //     });
-    //     if (res.data.userId) setCookie("userId", res.data.userId, 300000);
-    //     navigate("/room/" + res.data.code);
-    //   } catch (e) {
-    //     setErrorText(e.message);
-    //     console.log(e);
-    //   }
-    // })();
-  };
-
-  const handleCreateRoomSubmit = (e) => {
-    // Ensure a name has been entered
+    // If no name input yet, check to see if the room exists
     if (!name) {
-      setErrorText("Error: Please enter a name");
+      (async () => {
+        try {
+          // If it exists, proceed to name input
+          let res = await axios.get(apiUrl + "/room/" + roomCode);
+          setInputStage(2);
+        } catch (e) {
+          setErrorText("Room '" + roomCode + "' does not exist.");
+        }
+      })();
       return;
     }
 
+    // If the name has been entered (second time this function has run)
+    (async () => {
+      try {
+        let res = await axios.post(apiUrl + "/join/" + roomCode, {
+          name: name,
+          userId: userId,
+        });
+        if (res.data.userId) setCookie("userId", res.data.userId, 300000);
+        navigate("/room/" + res.data.code);
+      } catch (e) {
+        setErrorText(e.message);
+        console.log(e);
+      }
+    })();
+  };
+
+  const handleCreateRoomSubmit = (e) => {
+    setErrorText("");
+    if (!name) {
+      // Go to name entry stage
+      setInputStage(1);
+      return;
+    }
     // Send POST to /room/new with user's name
     axios
       .post(apiUrl + "/room/new", { name: name })
@@ -178,6 +178,12 @@ function Home() {
     });
   }
 
+  const handleBackButton = (event) => {
+    setName("");
+    setRoomCode("");
+    setInputStage(0);
+  };
+
   // Used to prevent scrolling to focus on input on mobile devices
   const handleInputFocus = (event) => {
     // setScrollPosition(window.scrollY);
@@ -235,6 +241,7 @@ function Home() {
                     </div>
                   </>
                 );
+              // Create room "play" submit
               case 1:
                 return (
                   <>
@@ -243,15 +250,62 @@ function Home() {
                         <div>Name</div>
                         <div className="charCounter" ref={charCounter}></div>
                       </div>
-                      <input
-                        type="text"
-                        placeholder="NAME"
-                        onChange={handleNameInputChange}
-                        onFocus={handleInputFocus}
-                        maxLength={NAME_MAX_LENGTH}
-                        className="homeInput"
-                        id="nameInput"
-                      />
+                      <div className="backButtonNameInputWrapper">
+                        <input
+                          type="text"
+                          placeholder="ENTER YOUR NAME"
+                          onChange={handleNameInputChange}
+                          onFocus={handleInputFocus}
+                          maxLength={NAME_MAX_LENGTH}
+                          className="homeInput"
+                          id="nameInput"
+                        />
+                      </div>
+                    </div>
+                    <div className="playButtonWrapper">
+                      <button className="backButton" onClick={handleBackButton}>
+                        ←
+                      </button>
+                      <button
+                        className="playButton"
+                        onClick={handleCreateRoomSubmit}
+                      >
+                        Play
+                      </button>
+                    </div>
+                  </>
+                );
+              // Join room "play" submit
+              case 2:
+                return (
+                  <>
+                    <div className="inputWrapper">
+                      <div className="inputTitle">
+                        <div>Name</div>
+                        <div className="charCounter" ref={charCounter}></div>
+                      </div>
+                      <div className="backButtonNameInputWrapper">
+                        <input
+                          type="text"
+                          placeholder="ENTER YOUR NAME"
+                          onChange={handleNameInputChange}
+                          onFocus={handleInputFocus}
+                          maxLength={NAME_MAX_LENGTH}
+                          className="homeInput"
+                          id="nameInput"
+                        />
+                      </div>
+                    </div>
+                    <div className="playButtonWrapper">
+                      <button className="backButton" onClick={handleBackButton}>
+                        ←
+                      </button>
+                      <button
+                        className="playButton"
+                        onClick={handleJoinRoomSubmit}
+                      >
+                        Play
+                      </button>
                     </div>
                   </>
                 );

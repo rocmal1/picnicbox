@@ -35,6 +35,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  max-width: 14rem;
 }
 
 input {
@@ -43,11 +44,10 @@ input {
   border: 1px solid grey;
   height: 44px;
   text-align: center;
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 600;
   width: 14rem;
   text-align: center;
-  letter-spacing: 0.5rem;
 }
 
 input::placeholder {
@@ -60,16 +60,20 @@ input::placeholder {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: auto;
-  margin: 1.2rem 0 0 0.1rem;
+  margin: 29px 0 0 0rem;
 }
 
 .inputTitle {
   font-size: 1.4rem;
-  margin: 0rem 0 0.3rem 1.2rem;
+  margin: 0 0 6px 0;
+  padding: 0 0 0 0;
   display: flex;
   justify-content: space-between;
   width: 100%;
+}
+
+#roomCodeInput {
+  letter-spacing: 0.5rem;
 }
 
 .homeInput:focus {
@@ -118,4 +122,24 @@ button:active {
   align-items: center;
   justify-content: center;
   margin: 16px 0;
+}
+
+.backButton {
+  width: 55px;
+  height: 55px;
+  font-size: 2rem;
+  padding: 0;
+  border-radius: 30px;
+  margin-right: 12px;
+  margin-top: 13px;
+}
+
+.playButton {
+  margin-top: 13px;
+  width: 11rem;
+}
+
+.playButtonWrapper {
+  display: flex;
+  align-items: center;
 }
