@@ -1,0 +1,43 @@
+.main {
+  height: 100vh;
+  background-color: #d8829d;
+  color: white;
+
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+}
+
+.header {
+  background-color: #d8829d;
+  max-width: 300px;
+  color: whitesmoke;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0.4rem 0 0.4rem 0;
+}
+
+.title {
+  font-family: "Bubblegum Sans", sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+
+.roomCode {
+}
+
+.content {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  height: 75vh;
+  flex-direction: column;
+}
+
+.content button {
+  background-color: whitesmoke;
+}

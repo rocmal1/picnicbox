@@ -6,7 +6,7 @@ import { useParams } from "react-router-dom";
 
 import { socket } from "../socket.js";
 
-import "./Room.css";
+import RoomCSS from "./Room.module.css";
 
 import ErrorComponent from "../components/ErrorComponent";
 import LeaderModeSelect from "../components/LeaderModeSelect";
@@ -28,6 +28,8 @@ function Room(props) {
   const [userId, setUserId] = useState("");
 
   const [leaderUser, setLeaderUser] = useState("");
+
+  const [pageState, setPageState] = useState("setup");
 
   const [usernames, setUsernames] = useState([]);
 
@@ -107,29 +109,28 @@ function Room(props) {
   };
 
   return (
-    <div>
-      <div>
-        Room Code is: {roomCode}, User ID is: {userId}
+    <div className={RoomCSS.main}>
+      <div className={RoomCSS.header}>
+        <div className={RoomCSS.title}>picnicbox.tv</div>
+        <div className={RoomCSS.roomCode}>Code: {roomCode}</div>
       </div>
-      <LeaderModeSelect
-        isLeader={userId === leaderUser._id}
-        leaderName={leaderUser.name}
-        handleLeaderFinishSetup={handleLeaderFinishSetup}
-      />
-      <ul>
-        {usernames.map((name, index) => {
-          if (name === leaderUser.name) return <li key={index}>👑 {name}</li>;
-          return <li key={index}>{name}</li>;
-        })}
-      </ul>
-      <div className="promptWrapper">
-        <div className="promptCard">{currentPrompt}</div>
-        <input type="text" placeholder="response"></input>
+      <div className={RoomCSS.content}>
+        {(() => {
+          switch (pageState) {
+            case "setup":
+              return (
+                <LeaderModeSelect
+                  isLeader={userId === leaderUser._id}
+                  leaderName={leaderUser.name}
+                  handleLeaderFinishSetup={handleLeaderFinishSetup}
+                  usernames={usernames}
+                />
+              );
+            default:
+              return null; // or some default content if needed
+          }
+        })()}
       </div>
-      <div className="responseWrapper">
-        <div className="responseCard"></div>
-      </div>
-      <button>test</button>
     </div>
   );
 }

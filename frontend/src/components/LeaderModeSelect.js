@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import "./LeaderModeSelect.css";
+import LmsCSS from "./LeaderModeSelect.module.css";
+import RoomCSS from "../routes/Room.module.css";
 import axios from "axios";
 
 const apiUrl = "http://localhost:3001";
@@ -27,8 +28,19 @@ function LeaderModeSelect(props) {
   // If user is not the leader display nothing
   if (!props.isLeader)
     return (
-      <div className="loading">
-        👑 {props.leaderName} is configuring the game
+      <div className={LmsCSS.leaderModeSelectContent}>
+        <div className={LmsCSS.loading}>
+          👑 {props.leaderName} is configuring the game
+        </div>
+
+        <ul className={LmsCSS.usernames}>
+          <div className={LmsCSS.usernamesTitle}>Players:</div>
+          {props.usernames.map((name, index) => {
+            if (name === props.leaderName)
+              return <li key={index}>👑 {name}</li>;
+            return <li key={index}>{name}</li>;
+          })}
+        </ul>
       </div>
     );
 
@@ -102,13 +114,23 @@ function LeaderModeSelect(props) {
   switch (setupState) {
     case 0:
       return (
-        <div className="wrapper">
-          <div>Select a gamemode:</div>
-          <select value={gamemode} onChange={handleGamemodeSelectChange}>
-            <option value="Quippage">Quippage</option>
-            <option value="Other Mode">Other Mode</option>
-          </select>
-          <button onClick={gamemodeLockedIn}>next</button>
+        <div className={LmsCSS.leaderModeSelectContent}>
+          <div className={LmsCSS.wrapper}>
+            <div>Select a gamemode:</div>
+            <select value={gamemode} onChange={handleGamemodeSelectChange}>
+              <option value="Quippage">Quippage</option>
+              <option value="Other Mode">Other Mode</option>
+            </select>
+            <button onClick={gamemodeLockedIn}>Next</button>
+          </div>
+          <ul className={LmsCSS.usernames}>
+            <div className={LmsCSS.usernamesTitle}>Players:</div>
+            {props.usernames.map((name, index) => {
+              if (name === props.leaderName)
+                return <li key={index}>👑 {name}</li>;
+              return <li key={index}>{name}</li>;
+            })}
+          </ul>
         </div>
       );
 
