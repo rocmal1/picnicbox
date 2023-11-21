@@ -7,12 +7,14 @@ import { useNavigate } from "react-router-dom";
 
 // *** Component & Style Imports
 import ErrorComponent from "../components/ErrorComponent";
-import "./Home.css";
+import HomeCSS from "./Home.module.css";
 import { setCookie, getCookie } from "../helpers";
 
 // *** Environment Variables
-// const apiUrl = process.env.REACT_APP_BACKEND_URL;
-const apiUrl = "http://localhost:3001";
+const apiUrl = process.env.REACT_APP_BACKEND_URL;
+// const apiUrl = "http://localhost:3001";
+
+const topLevelDirectory = process.env.PUBLIC_URL;
 
 function Home() {
   // *** HOOKS
@@ -34,7 +36,7 @@ function Home() {
   // useNavigate is used to push URLs to the user in React Router
   const navigate = useNavigate();
 
-  const NAME_MAX_LENGTH = 12;
+  const NAME_MAX_LENGTH = 10;
 
   // *** ON PAGE LOAD
   useEffect(() => {}, []);
@@ -71,6 +73,7 @@ function Home() {
 
     // Ensure the room code exists
     if (!roomCode) {
+      setErrorText("Please enter a room code.");
       return;
     }
 
@@ -194,80 +197,85 @@ function Home() {
   };
 
   return (
-    <div className="home">
-      <div className="header">picnicbox.tv</div>
-      <div className="main">
-        <div className="content">
+    <div className={HomeCSS.home}>
+      <div className={HomeCSS.header}>picnicbox.tv</div>
+      <div className={HomeCSS.main}>
+        <div className={HomeCSS.content}>
           {(() => {
             switch (inputStage) {
               case 0:
                 return (
                   <>
-                    <div className="inputWrapper">
-                      <div className="inputTitle">Room Code</div>
+                    <div className={HomeCSS.inputWrapper}>
+                      <div className={HomeCSS.inputTitle}>Room Code</div>
                       <input
                         type="text"
                         placeholder="ENTER 4-LETTER CODE"
                         onChange={handleRoomCodeInputChange}
                         onFocus={handleInputFocus}
                         maxLength="4"
-                        className="homeInput"
-                        id="roomCodeInput"
+                        className={HomeCSS.homeInput}
+                        id={HomeCSS["roomCodeInput"]}
                       />
                     </div>
-                    <div className="buttonWrapper">
-                      <button
-                        id="joinRoomSubmit"
-                        className="button"
-                        onClick={handleJoinRoomSubmit}
-                      >
-                        Join
-                      </button>
-                    </div>
+                    <button
+                      id={HomeCSS["joinRoomSubmit"]}
+                      className={HomeCSS.button}
+                      onClick={handleJoinRoomSubmit}
+                    >
+                      Join
+                    </button>
                     <ErrorComponent text={errorText} />
-                    <div className="orWrapper">
-                      <div className="horizontalRule"></div>OR
-                      <div className="horizontalRule"></div>
+                    <div className={HomeCSS.orWrapper}>
+                      <div className={HomeCSS.horizontalRule}></div>OR
+                      <div className={HomeCSS.horizontalRule}></div>
                     </div>
 
-                    <div className="buttonWrapper">
-                      <button
-                        id="createRoomSubmit"
-                        className="button"
-                        onClick={handleCreateRoomSubmit}
-                      >
-                        Create Room
-                      </button>
-                    </div>
+                    <button
+                      id={HomeCSS["createRoomSubmit"]}
+                      className={HomeCSS.button}
+                      onClick={handleCreateRoomSubmit}
+                    >
+                      Create Room
+                    </button>
                   </>
                 );
               // Create room "play" submit
               case 1:
                 return (
                   <>
-                    <div className="inputWrapper">
-                      <div className="inputTitle">
+                    <div className={HomeCSS.inputWrapper}>
+                      <div className={HomeCSS.inputTitle}>
                         <div>Name</div>
-                        <div className="charCounter" ref={charCounter}></div>
+                        <div
+                          className={HomeCSS.charCounter}
+                          ref={charCounter}
+                        ></div>
                       </div>
-                      <div className="backButtonNameInputWrapper">
+                      <div className={HomeCSS.backButtonNameInputWrapper}>
                         <input
                           type="text"
                           placeholder="ENTER YOUR NAME"
                           onChange={handleNameInputChange}
                           onFocus={handleInputFocus}
                           maxLength={NAME_MAX_LENGTH}
-                          className="homeInput"
+                          className={HomeCSS.homeInput}
                           id="nameInput"
                         />
                       </div>
                     </div>
-                    <div className="playButtonWrapper">
-                      <button className="backButton" onClick={handleBackButton}>
-                        ←
+                    <div className={HomeCSS.playButtonWrapper}>
+                      <button
+                        className={HomeCSS.backButton}
+                        onClick={handleBackButton}
+                      >
+                        <img
+                          className={HomeCSS.backButtonImage}
+                          src="/arrow-left.svg"
+                        ></img>
                       </button>
                       <button
-                        className="playButton"
+                        className={HomeCSS.playButton}
                         onClick={handleCreateRoomSubmit}
                       >
                         Play
@@ -279,29 +287,35 @@ function Home() {
               case 2:
                 return (
                   <>
-                    <div className="inputWrapper">
-                      <div className="inputTitle">
+                    <div className={HomeCSS.inputWrapper}>
+                      <div className={HomeCSS.inputTitle}>
                         <div>Name</div>
-                        <div className="charCounter" ref={charCounter}></div>
+                        <div
+                          className={HomeCSS.charCounter}
+                          ref={charCounter}
+                        ></div>
                       </div>
-                      <div className="backButtonNameInputWrapper">
+                      <div className={HomeCSS.backButtonNameInputWrapper}>
                         <input
                           type="text"
                           placeholder="ENTER YOUR NAME"
                           onChange={handleNameInputChange}
                           onFocus={handleInputFocus}
                           maxLength={NAME_MAX_LENGTH}
-                          className="homeInput"
+                          className={HomeCSS.homeInput}
                           id="nameInput"
                         />
                       </div>
                     </div>
-                    <div className="playButtonWrapper">
-                      <button className="backButton" onClick={handleBackButton}>
+                    <div className={HomeCSS.playButtonWrapper}>
+                      <button
+                        className={HomeCSS.backButton}
+                        onClick={handleBackButton}
+                      >
                         ←
                       </button>
                       <button
-                        className="playButton"
+                        className={HomeCSS.playButton}
                         onClick={handleJoinRoomSubmit}
                       >
                         Play

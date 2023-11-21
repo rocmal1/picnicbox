@@ -36,8 +36,19 @@
   align-items: center;
   height: 75vh;
   flex-direction: column;
+  width: 90%;
+  max-width: 30rem;
 }
 
 .content button {
+  color: black;
   background-color: whitesmoke;
+}
+
+.content button:hover {
+  filter: brightness(0.9);
+}
+
+.content button:active {
+  transform: scale(0.9); /* Scale the button down when pressed */
 }

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import LmsCSS from "./LeaderModeSelect.module.css";
-import RoomCSS from "../routes/Room.module.css";
 import axios from "axios";
 
-const apiUrl = "http://localhost:3001";
+// const apiUrl = "http://localhost:3001";
+const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
 function LeaderModeSelect(props) {
   const [setupState, setSetupState] = useState(0);
@@ -105,6 +105,8 @@ function LeaderModeSelect(props) {
       // Get the available lists for the selected gamemode
       const dbLists = (await axios.get(apiUrl + "/lists/quippage")).data;
       console.log("dbLists:", dbLists);
+
+      setActiveGameLists([]);
       setGameLists(dbLists);
       setDisplayedGameLists(dbLists);
       setSetupState(1);
@@ -116,10 +118,16 @@ function LeaderModeSelect(props) {
       return (
         <div className={LmsCSS.leaderModeSelectContent}>
           <div className={LmsCSS.wrapper}>
-            <div>Select a gamemode:</div>
-            <select value={gamemode} onChange={handleGamemodeSelectChange}>
+            <div className={LmsCSS.instructions}>Select a gamemode:</div>
+            <select
+              className={LmsCSS.gamemodeSelect}
+              value={gamemode}
+              onChange={handleGamemodeSelectChange}
+            >
               <option value="Quippage">Quippage</option>
-              <option value="Other Mode">Other Mode</option>
+              <option value="other" disabled="true">
+                Coming soon...
+              </option>
             </select>
             <button onClick={gamemodeLockedIn}>Next</button>
           </div>
@@ -136,61 +144,72 @@ function LeaderModeSelect(props) {
 
     case 1:
       return (
-        <div className="wrapper">
+        <div className={LmsCSS.wrapper}>
           <div>Gamemode: {gamemode}</div>
-          <div>Select a list of questions:</div>
-          <div className="quippage-list-selector">
-            <h2>Selected Game Lists</h2>
-            <ul className="active-list-items">
-              {activeGameLists.map((gameList, index) => {
-                return (
-                  <li
-                    className="list-selector-item"
-                    key={index}
-                    onMouseEnter={() =>
-                      handleListItemMouseEnter(index, "active")
-                    }
-                    onMouseLeave={() =>
-                      handleListItemMouseLeave(index, "active")
-                    }
-                    onClick={() => handleActiveListItemClick(gameList)}
-                  >
-                    {hoveredActiveListItem === index && <div>(-)</div>}
-                    {gameList.name}
-                  </li>
-                );
-              })}
-            </ul>
-            <h2>Game Lists</h2>
-            <ul className="list-items">
+          <div>Select question pack(s) to play with:</div>
+          <div className={LmsCSS.quippageListsWrapper}>
+            <div className={LmsCSS.activeListWrapper}>
+              <div className={LmsCSS.quippageListTitle}>Selected Packs</div>
+              <ul className={LmsCSS.activeListItems}>
+                {activeGameLists.map((gameList, index) => {
+                  return (
+                    <li
+                      className={LmsCSS.listSelectorItem}
+                      key={index}
+                      onMouseEnter={() =>
+                        handleListItemMouseEnter(index, "active")
+                      }
+                      onMouseLeave={() =>
+                        handleListItemMouseLeave(index, "active")
+                      }
+                      onClick={() => handleActiveListItemClick(gameList)}
+                    >
+                      {gameList.name}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            <div className={LmsCSS.listWrapper}>
+              <div className={LmsCSS.quippageListTitle}>Available Packs</div>
               <input
                 type="text"
+                className={LmsCSS.gameListSearchInput}
                 onChange={handleGameListSearch}
                 placeholder="Search"
                 ref={gameListSearchRef}
               ></input>
-              {displayedGameLists.map((gameList, index) => {
-                return (
-                  <li
-                    className="list-selector-item"
-                    key={index}
-                    onMouseEnter={() =>
-                      handleListItemMouseEnter(index, "inactive")
-                    }
-                    onMouseLeave={() =>
-                      handleListItemMouseLeave(index, "inactive")
-                    }
-                    onClick={() => handleListItemClick(gameList)}
-                  >
-                    {hoveredListItem === index && <div>(+)</div>}
-                    {gameList.name}
-                  </li>
-                );
-              })}
-            </ul>
+              <ul className={LmsCSS.listItems}>
+                {displayedGameLists.map((gameList, index) => {
+                  return (
+                    <li
+                      className={LmsCSS.listSelectorItem}
+                      key={index}
+                      onMouseEnter={() =>
+                        handleListItemMouseEnter(index, "inactive")
+                      }
+                      onMouseLeave={() =>
+                        handleListItemMouseLeave(index, "inactive")
+                      }
+                      onClick={() => handleListItemClick(gameList)}
+                    >
+                      {gameList.name}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </div>
-          <div>
-            <button onClick={() => setSetupState(0)}>back</button>
+          <div className={LmsCSS.buttonBar}>
+            <button
+              className={LmsCSS.backButton}
+              onClick={() => setSetupState(0)}
+            >
+              <img
+                className={LmsCSS.backButtonImage}
+                src="/arrow-left-black.svg"
+              ></img>
+            </button>
             <button onClick={() => setSetupState(2)}>next</button>
           </div>
         </div>

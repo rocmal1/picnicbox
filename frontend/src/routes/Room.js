@@ -114,6 +114,7 @@ function Room(props) {
         <div className={RoomCSS.title}>picnicbox.tv</div>
         <div className={RoomCSS.roomCode}>Code: {roomCode}</div>
       </div>
+      <div className={RoomCSS.subheader}></div>
       <div className={RoomCSS.content}>
         {(() => {
           switch (pageState) {
