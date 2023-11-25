@@ -121,7 +121,9 @@ function LeaderModeSelect(props) {
               <option value="Quippage">Quippage</option>
               <option value="Other Mode">Other Mode</option>
             </select>
-            <button onClick={gamemodeLockedIn}>Next</button>
+            <button className={LmsCSS.button} onClick={gamemodeLockedIn}>
+              Next
+            </button>
           </div>
           <ul className={LmsCSS.usernames}>
             <div className={LmsCSS.usernamesTitle}>Players:</div>
@@ -190,8 +192,12 @@ function LeaderModeSelect(props) {
             </ul>
           </div>
           <div>
-            <button onClick={() => setSetupState(0)}>back</button>
-            <button onClick={() => setSetupState(2)}>next</button>
+            <button className={LmsCSS.button} onClick={() => setSetupState(0)}>
+              Back
+            </button>
+            <button className={LmsCSS.button} onClick={() => setSetupState(2)}>
+              Next
+            </button>
           </div>
         </div>
       );

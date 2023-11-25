@@ -10,6 +10,8 @@ import RoomCSS from "./Room.module.css";
 
 import ErrorComponent from "../components/ErrorComponent";
 import LeaderModeSelect from "../components/LeaderModeSelect";
+import DisplayPrompt from "../components/DisplayPrompt";
+import CountdownTimer from "../components/CountdownTimer.js";
 
 const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
@@ -106,6 +108,11 @@ function Room(props) {
       gameLists: gameLists,
     };
     socket.emit("cSetupComplete");
+    setPageState("displayPrompt");
+  };
+
+  const handleDisplayPromptFinish = () => {
+    console.log("DISPLAY PROMPT FINISHED!");
   };
 
   return (
@@ -119,11 +126,21 @@ function Room(props) {
           switch (pageState) {
             case "setup":
               return (
-                <LeaderModeSelect
-                  isLeader={userId === leaderUser._id}
-                  leaderName={leaderUser.name}
-                  handleLeaderFinishSetup={handleLeaderFinishSetup}
-                  usernames={usernames}
+                <>
+                  <CountdownTimer initialTime={60} />
+                  <LeaderModeSelect
+                    isLeader={userId === leaderUser._id}
+                    leaderName={leaderUser.name}
+                    handleLeaderFinishSetup={handleLeaderFinishSetup}
+                    usernames={usernames}
+                  />
+                </>
+              );
+            case "displayPrompt":
+              return (
+                <DisplayPrompt
+                  currentPrompt={currentPrompt}
+                  handleDisplayPromptFinish={handleDisplayPromptFinish}
                 />
               );
             default:

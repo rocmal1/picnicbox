@@ -11,8 +11,8 @@ import "./Home.css";
 import { setCookie, getCookie } from "../helpers";
 
 // *** Environment Variables
-// const apiUrl = process.env.REACT_APP_BACKEND_URL;
-const apiUrl = "http://localhost:3001";
+const apiUrl = process.env.REACT_APP_BACKEND_URL;
+// const apiUrl = "http://localhost:3001";
 
 function Home() {
   // *** HOOKS

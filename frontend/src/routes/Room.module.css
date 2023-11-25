@@ -1,5 +1,6 @@
 .main {
   height: 100vh;
+  width: 100%;
   background-color: #d8829d;
   color: white;
 
@@ -36,6 +37,9 @@
   align-items: center;
   height: 75vh;
   flex-direction: column;
+  max-width: 85%;
+
+  border: 1px solid red;
 }
 
 .content button {
