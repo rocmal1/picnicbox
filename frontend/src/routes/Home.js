@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 // *** Component & Style Imports
 import ErrorComponent from "../components/ErrorComponent";
-import "./Home.css";
+import style from "./Home.module.css";
 import { setCookie, getCookie } from "../helpers";
 
 // *** Environment Variables
@@ -184,56 +184,46 @@ function Home() {
     setInputStage(0);
   };
 
-  // Used to prevent scrolling to focus on input on mobile devices
-  const handleInputFocus = (event) => {
-    // setScrollPosition(window.scrollY);
-    // event.target.blur();
-    // setTimeout(() => {
-    //   window.scrollTo(0, scrollPosition);
-    // }, 0);
-  };
-
   return (
-    <div className="home">
-      <div className="header">picnicbox.tv</div>
-      <div className="main">
-        <div className="content">
+    <div className={style.home}>
+      <div className={style.header}>picnicbox.tv</div>
+      <div className={style.main}>
+        <div className={style.content}>
           {(() => {
             switch (inputStage) {
               case 0:
                 return (
                   <>
-                    <div className="inputWrapper">
-                      <div className="inputTitle">Room Code</div>
+                    <div className={style.inputWrapper}>
+                      <div className={style.inputTitle}>Room Code</div>
                       <input
                         type="text"
                         placeholder="ENTER 4-LETTER CODE"
                         onChange={handleRoomCodeInputChange}
-                        onFocus={handleInputFocus}
                         maxLength="4"
-                        className="homeInput"
-                        id="roomCodeInput"
+                        className={style.input}
+                        id={style.roomCodeInput}
                       />
                     </div>
-                    <div className="buttonWrapper">
+                    <div className={style.buttonWrapper}>
                       <button
-                        id="joinRoomSubmit"
-                        className="button"
+                        id={style.joinRoomSubmit}
+                        className={style.button}
                         onClick={handleJoinRoomSubmit}
                       >
                         Join
                       </button>
                     </div>
                     <ErrorComponent text={errorText} />
-                    <div className="orWrapper">
-                      <div className="horizontalRule"></div>OR
-                      <div className="horizontalRule"></div>
+                    <div className={style.orWrapper}>
+                      <div className={style.horizontalRule}></div>OR
+                      <div className={style.horizontalRule}></div>
                     </div>
 
-                    <div className="buttonWrapper">
+                    <div className={style.buttonWrapper}>
                       <button
-                        id="createRoomSubmit"
-                        className="button"
+                        id={style.createRoomSubmit}
+                        className={style.button}
                         onClick={handleCreateRoomSubmit}
                       >
                         Create Room
@@ -245,29 +235,34 @@ function Home() {
               case 1:
                 return (
                   <>
-                    <div className="inputWrapper">
-                      <div className="inputTitle">
+                    <div className={style.inputWrapper}>
+                      <div className={style.inputTitle}>
                         <div>Name</div>
-                        <div className="charCounter" ref={charCounter}></div>
+                        <div
+                          className={style.charCounter}
+                          ref={charCounter}
+                        ></div>
                       </div>
-                      <div className="backButtonNameInputWrapper">
+                      <div className={style.backButtonNameInputWrapper}>
                         <input
                           type="text"
                           placeholder="ENTER YOUR NAME"
                           onChange={handleNameInputChange}
-                          onFocus={handleInputFocus}
                           maxLength={NAME_MAX_LENGTH}
-                          className="homeInput"
-                          id="nameInput"
+                          className={style.input}
+                          id={style.nameInput}
                         />
                       </div>
                     </div>
-                    <div className="playButtonWrapper">
-                      <button className="backButton" onClick={handleBackButton}>
+                    <div className={style.playButtonWrapper}>
+                      <button
+                        className={`${style.backButton} ${style.button}`}
+                        onClick={handleBackButton}
+                      >
                         ←
                       </button>
                       <button
-                        className="playButton"
+                        className={`${style.playButton} ${style.button}`}
                         onClick={handleCreateRoomSubmit}
                       >
                         Play
@@ -279,29 +274,34 @@ function Home() {
               case 2:
                 return (
                   <>
-                    <div className="inputWrapper">
-                      <div className="inputTitle">
+                    <div className={style.inputWrapper}>
+                      <div className={style.inputTitle}>
                         <div>Name</div>
-                        <div className="charCounter" ref={charCounter}></div>
+                        <div
+                          className={style.charCounter}
+                          ref={charCounter}
+                        ></div>
                       </div>
-                      <div className="backButtonNameInputWrapper">
+                      <div className={style.backButtonNameInputWrapper}>
                         <input
                           type="text"
                           placeholder="ENTER YOUR NAME"
                           onChange={handleNameInputChange}
-                          onFocus={handleInputFocus}
                           maxLength={NAME_MAX_LENGTH}
-                          className="homeInput"
-                          id="nameInput"
+                          className={style.input}
+                          id={style.nameInput}
                         />
                       </div>
                     </div>
-                    <div className="playButtonWrapper">
-                      <button className="backButton" onClick={handleBackButton}>
+                    <div className={style.playButtonWrapper}>
+                      <button
+                        className={`${style.backButton} ${style.button}`}
+                        onClick={handleBackButton}
+                      >
                         ←
                       </button>
                       <button
-                        className="playButton"
+                        className={`${style.playButton} ${style.button}`}
                         onClick={handleJoinRoomSubmit}
                       >
                         Play

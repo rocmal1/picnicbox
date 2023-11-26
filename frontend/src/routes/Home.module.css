@@ -35,7 +35,7 @@
   max-width: 14rem;
 }
 
-input {
+.input {
   text-transform: uppercase;
   border-radius: 14px;
   border: 1px solid grey;
@@ -47,7 +47,12 @@ input {
   text-align: center;
 }
 
-input::placeholder {
+.input:focus {
+  border: 1px solid grey;
+  outline: none;
+}
+
+.input::placeholder {
   font-size: 1rem;
   letter-spacing: 0;
   font-weight: 500;
@@ -73,12 +78,7 @@ input::placeholder {
   letter-spacing: 0.5rem;
 }
 
-.homeInput:focus {
-  border: 1px solid grey;
-  outline: none;
-}
-
-button {
+.button {
   border-radius: 0.8rem;
   border: 1px solid grey;
   color: whitesmoke;
@@ -90,11 +90,11 @@ button {
   width: 14rem;
 }
 
-button:hover {
+.button:hover {
   background-color: #e27899;
 }
 
-button:active {
+.button:active {
   background-color: #d63d6d;
 }
 

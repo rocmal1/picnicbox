@@ -111,6 +111,13 @@ function LeaderModeSelect(props) {
     })();
   };
 
+  const handleCreatePlaylist = () => {
+    return (
+      // Back out to Room.js, providing the gamemode and the note that we need to create a playlist
+      props.handleLeaderCreatePlaylist(gamemode)
+    );
+  };
+
   switch (setupState) {
     case 0:
       return (
@@ -142,6 +149,11 @@ function LeaderModeSelect(props) {
           <div>Gamemode: {gamemode}</div>
           <div>Select a list of questions:</div>
           <div className="quippage-list-selector">
+            <div>
+              <button className="button" onClick={handleCreatePlaylist}>
+                Create Custom Playlist
+              </button>
+            </div>
             <h2>Selected Game Lists</h2>
             <ul className="active-list-items">
               {activeGameLists.map((gameList, index) => {

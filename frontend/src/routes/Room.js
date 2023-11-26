@@ -12,6 +12,7 @@ import ErrorComponent from "../components/ErrorComponent";
 import LeaderModeSelect from "../components/LeaderModeSelect";
 import DisplayPrompt from "../components/DisplayPrompt";
 import CountdownTimer from "../components/CountdownTimer.js";
+import Editor from "../components/Editor.js";
 
 const apiUrl = process.env.REACT_APP_BACKEND_URL;
 
@@ -39,6 +40,8 @@ function Room(props) {
 
   // Error message is tracked as state and displayed in the ErrorComponent
   const [errorText, setErrorText] = useState("");
+
+  const [gamemode, setGamemode] = useState("");
 
   // On loading the page
   useEffect(() => {
@@ -115,6 +118,12 @@ function Room(props) {
     console.log("DISPLAY PROMPT FINISHED!");
   };
 
+  const handleLeaderCreatePlaylist = (gamemode) => {
+    console.log("LEADER IS CREATING PLAYLIST!");
+    setGamemode(gamemode);
+    setPageState("createPlaylist");
+  };
+
   return (
     <div className={RoomCSS.main}>
       <div className={RoomCSS.header}>
@@ -132,6 +141,7 @@ function Room(props) {
                     isLeader={userId === leaderUser._id}
                     leaderName={leaderUser.name}
                     handleLeaderFinishSetup={handleLeaderFinishSetup}
+                    handleLeaderCreatePlaylist={handleLeaderCreatePlaylist}
                     usernames={usernames}
                   />
                 </>
@@ -143,6 +153,8 @@ function Room(props) {
                   handleDisplayPromptFinish={handleDisplayPromptFinish}
                 />
               );
+            case "createPlaylist":
+              return <Editor />;
             default:
               return null; // or some default content if needed
           }
