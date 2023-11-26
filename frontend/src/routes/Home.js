@@ -34,7 +34,7 @@ function Home() {
   // useNavigate is used to push URLs to the user in React Router
   const navigate = useNavigate();
 
-  const NAME_MAX_LENGTH = 12;
+  const NAME_MAX_LENGTH = 10;
 
   // *** ON PAGE LOAD
   useEffect(() => {}, []);
@@ -71,6 +71,7 @@ function Home() {
 
     // Ensure the room code exists
     if (!roomCode) {
+      setErrorText("Please enter a room code.");
       return;
     }
 
